@@ -493,6 +493,7 @@ select.fi option { background: var(--panel2); }
         <button class="mtab" onclick="showMTab('mos')">MOS/GFS</button>
         <button class="mtab" onclick="showMTab('snd')">Soundings</button>
         <button class="mtab" onclick="showMTab('fronto')">Fronto/Dyn</button>
+        <button class="mtab" onclick="showMTab('ens')">Ensembles</button>
         <button class="mtab" onclick="showMTab('text')">Text Prods</button>
       </div>
       <div class="model-panel active" id="mp-nbm"><div class="model-loading">Click "Load Model Guidance" →</div></div>
@@ -500,6 +501,35 @@ select.fi option { background: var(--panel2); }
       <div class="model-panel" id="mp-mos"><div class="model-loading">MOS + GFS text loads with model data →</div></div>
       <div class="model-panel" id="mp-snd"><div class="model-loading">Soundings load with model data →</div></div>
       <div class="model-panel" id="mp-fronto"><div class="model-loading">Frontogenesis/dynamics load with model data →</div></div>
+      <div class="model-panel" id="mp-ens">
+        <div style="padding:6px 0">
+          <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:.12em;margin-bottom:6px">ENSEMBLE / HIGH-RES IMPORT</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:8px;line-height:1.6">
+            HREF, RRFS, GEFS, EPS, CMC, EPSai, GEPSai require NOMADS/ECMWF access — paste guidance text below from Pivotal Weather, AWIPS, or Copernicus.
+            The AI will parse and incorporate all pasted guidance.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--warn);letter-spacing:.08em;margin-bottom:3px">HREF / RRFS</div>
+              <textarea id="ens-href" class="fi" style="font-size:9px;min-height:70px;font-family:var(--mono)" placeholder="Paste HREF/RRFS guidance, probability text, or key stats..."></textarea>
+            </div>
+            <div>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--warn);letter-spacing:.08em;margin-bottom:3px">GEFS / EPS / CMC</div>
+              <textarea id="ens-gefs" class="fi" style="font-size:9px;min-height:70px;font-family:var(--mono)" placeholder="Paste GEFS/EPS/CMC ensemble mean, spread, or plume text..."></textarea>
+            </div>
+            <div>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent2);letter-spacing:.08em;margin-bottom:3px">EPSai / GEPSai</div>
+              <textarea id="ens-epsai" class="fi" style="font-size:9px;min-height:70px;font-family:var(--mono)" placeholder="Paste EPSai / GEPSai AI-postprocessed ensemble output..."></textarea>
+            </div>
+            <div>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:3px">Other / Notes</div>
+              <textarea id="ens-other" class="fi" style="font-size:9px;min-height:70px;font-family:var(--mono)" placeholder="ECMWF HRES, 3km NAM, manual spread notes, Pivotal screenshots text..."></textarea>
+            </div>
+          </div>
+          <button class="hdr-btn btn-green" style="margin-top:8px;font-size:9px;padding:4px 10px" onclick="saveEnsembleInput()">✓ Save to Model Context</button>
+          <span id="ens-saved-status" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:8px"></span>
+        </div>
+      </div>
       <div class="model-panel" id="mp-text"><div class="model-loading">Text products load with model data →</div></div>
     </div>
     <div class="rp-sec">
@@ -1253,23 +1283,53 @@ async function fetchNBMPoint(name, lat, lon) {
     const spdKt = next168.map(p => Math.round((parseInt(p.windSpeed)||0)*0.868976));
     const maxWind = Math.max(...spdKt);
 
-    const correctedGusts = next168.map(p => {
+    // Detect LLJ signature from consecutive periods: southerly wind (SSW-SSE)
+    // that increases then sharply accelerates — proxy for pre-frontal LLJ/inversion mix-out
+    // True LLJ detection requires sounding but we can flag the surface wind signature
+    const lljFlags = next168.map((p, i) => {
+      if(i < 2) return false;
+      const dir = p.windDirection||'';
+      const isSoutherly = /^(S|SSW|SW|SSE|SE)$/.test(dir);
+      const spd0 = Math.round((parseInt(next168[i-2].windSpeed)||0)*0.868976);
+      const spd1 = Math.round((parseInt(next168[i-1].windSpeed)||0)*0.868976);
+      const spd2 = Math.round((parseInt(p.windSpeed)||0)*0.868976);
+      // Southerly + wind accelerating >= 8kt over 2h = LLJ mix-out signal
+      return isSoutherly && (spd2 - spd0) >= 8 && spd2 >= 15;
+    });
+    const lljActive = lljFlags.some(Boolean);
+
+    const correctedGusts = next168.map((p, i) => {
       const spd  = Math.round((parseInt(p.windSpeed)||0)*0.868976);
       const nbmG = p.windGust ? Math.round(parseInt(p.windGust)*0.868976) : Math.round(spd * 1.3);
       const hr   = new Date(p.startTime).getUTCHours();
       const sky  = p.shortForecast||'';
-      const isClear = /clear|sunny|fair|mostly sunny|partly sunny/i.test(sky);
-      const isAfternoon = hr >= 15 && hr <= 22;  // 15-22Z = ~10am-5pm EST
+      const dir  = p.windDirection||'';
 
-      // Mixing correction: sunny afternoon gets 1.6x factor, cloudy/night 1.3x
-      // Only apply when NBM is clearly low relative to mixing potential
+      const isClear     = /clear|sunny|fair|mostly sunny|partly sunny/i.test(sky);
+      const isAfternoon = hr >= 15 && hr <= 22;  // 15-22Z ~10am-5pm EST
+      const isSoutherly = /^(S|SSW|SW|SSE|SE)$/.test(dir);
+
+      // Case 1: daytime convective mixing — clear afternoon
+      // NBM misses BL momentum flux to surface, gust ~ 850mb wind
       const mixFactor = (isAfternoon && isClear) ? 1.6 : 1.3;
       const mixedGust = Math.round(spd * mixFactor);
 
-      // Take whichever is higher: NBM gust or mixing-corrected value
-      return Math.min(80, Math.max(nbmG, mixedGust));
+      // Case 2: southerly LLJ mix-out
+      // Pre-frontal S/SW LLJ with nocturnal/morning inversion eroding —
+      // when surface turns southerly and accelerates, NBM badly underpredicts
+      // gust surge as LLJ momentum mixes to surface. Factor ~1.5-1.7x wind.
+      const isLLJPeriod = lljFlags[i] || (isSoutherly && lljActive && spd >= 12);
+      const lljGust = isLLJPeriod ? Math.round(spd * 1.65) : 0;
+
+      return Math.min(80, Math.max(nbmG, mixedGust, lljGust));
     });
     const maxGust = Math.max(...correctedGusts);
+
+    // Flag whether LLJ signature was detected — used in panel display + prompt
+    const lljDetected = lljActive;
+    const lljMaxSpd = lljActive
+      ? Math.max(...next168.filter((_,i)=>lljFlags[i]).map(p=>Math.round((parseInt(p.windSpeed)||0)*0.868976)))
+      : 0;
 
     // Temperature range 7d
     const tAll = next168.map(p => p.temperature).filter(v => v != null);
@@ -1295,6 +1355,7 @@ async function fetchNBMPoint(name, lat, lon) {
       totalQPF, totalSnow, snowUom, maxPoP, maxGust, maxWind,
       tMax7d, tMin7d, avgSky, maxTstm,
       hasFZRA, hasTSTM, hasSnow,
+      lljDetected, lljMaxSpd,
       gridId, gridX, gridY,
     };
   } catch(e) {
@@ -1645,7 +1706,8 @@ function buildModelSummary() {
   if(nbmVals.length) {
     lines.push('--- NBM 7-DAY SUMMARY (per point) ---');
     nbmVals.forEach(p => {
-      const flags = [p.hasSnow?'SNOW':'', p.hasFZRA?'FZRA':'', p.hasTSTM?'TSTM':''].filter(Boolean).join(',');
+      const flags = [p.hasSnow?'SNOW':'', p.hasFZRA?'FZRA':'', p.hasTSTM?'TSTM':'',
+        p.lljDetected?`S-LLJ(${p.lljMaxSpd}kt)`:''].filter(Boolean).join(',');
       lines.push(`  ${p.name.padEnd(12)}: QPF=${p.totalQPF}" Snow=${p.totalSnow}" PoP=${p.maxPoP}% Gust=${p.maxGust}kt T=${p.tMin7d}-${p.tMax7d}°F Sky=${p.avgSky}%${flags?' ['+flags+']':''}`);
     });
     lines.push('');
@@ -1739,9 +1801,10 @@ function renderNBMPanel() {
 
   pts.filter(p=>!p.error).forEach(p => {
     const flags = [
-      p.hasSnow  ? `<span class="cam-flag precip">SNOW</span>` : '',
-      p.hasFZRA  ? `<span class="cam-flag fzra">FZRA</span>`  : '',
-      p.hasTSTM  ? `<span class="cam-flag conv">TSTM</span>`  : '',
+      p.hasSnow      ? `<span class="cam-flag precip">SNOW</span>`                     : '',
+      p.hasFZRA      ? `<span class="cam-flag fzra">FZRA</span>`                       : '',
+      p.hasTSTM      ? `<span class="cam-flag conv">TSTM</span>`                       : '',
+      p.lljDetected  ? `<span class="cam-flag conv" style="background:rgba(255,183,48,.18);color:var(--warn)">S-LLJ⚡</span>` : '',
     ].filter(Boolean).join('');
 
     html += `<div style="padding:4px 0;border-bottom:1px solid rgba(26,45,69,.5)">
@@ -1936,10 +1999,40 @@ function renderTextPanel() {
 }
 
 function showMTab(id) {
-  const ids = ['nbm','hrrr','mos','snd','fronto','text'];
+  const ids = ['nbm','hrrr','mos','snd','fronto','ens','text'];
   document.querySelectorAll('.mtab').forEach((t,i) => t.classList.toggle('active', ids[i]===id));
   document.querySelectorAll('.model-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('mp-'+id).classList.add('active');
+}
+
+function saveEnsembleInput() {
+  liveData.ensemble = {
+    href:  (document.getElementById('ens-href') ||{}).value  || '',
+    gefs:  (document.getElementById('ens-gefs') ||{}).value  || '',
+    epsai: (document.getElementById('ens-epsai')||{}).value  || '',
+    other: (document.getElementById('ens-other')||{}).value  || '',
+    savedAt: new Date().toUTCString(),
+  };
+  const hasContent = Object.values(liveData.ensemble).some(v => typeof v==='string' && v.trim().length > 0);
+  const st = document.getElementById('ens-saved-status');
+  if(st) st.textContent = hasContent ? `✓ Saved ${new Date().toUTCString().slice(17,22)}Z — will be included in next AI run` : '';
+  showToast('Ensemble guidance saved to model context', false);
+}
+
+function formatEnsembleForAFD(live) {
+  const ens = live.ensemble || {};
+  const sections = [
+    {key:'href',  label:'HREF / RRFS'},
+    {key:'gefs',  label:'GEFS / EPS / CMC'},
+    {key:'epsai', label:'EPSai / GEPSai'},
+    {key:'other', label:'Other Guidance'},
+  ];
+  const filled = sections.filter(s => ens[s.key]?.trim());
+  if(!filled.length) return '';
+  return filled.map(s => `[${s.label}]
+${ens[s.key].trim()}`).join('
+
+');
 }
 
 // ─── SCENARIO DETECTION ───────────────────────────────────────────────────────
@@ -2027,8 +2120,16 @@ function formatSoundingsForAFD(live) {
     if(d.llj)              lines.push(`  LLJ: ${d.llj.wspd}kt @ ${d.llj.pres}mb — enhanced precip transport`);
     // 850mb mixing gust estimate
     if(s.parsed.l850?.wspd > 0) {
-      const mix850 = s.parsed.l850.wspd;
-      lines.push(`  850mb wind: ${mix850}kt — afternoon mixing gust potential: ~${Math.round(mix850*0.9)}-${mix850}kt at surface when BL well-mixed`);
+      const mix850  = s.parsed.l850.wspd;
+      const dir850  = s.parsed.l850.wdir;
+      const mix925  = s.parsed.l925?.wspd || 0;
+      const dir925  = s.parsed.l925?.wdir;
+      const isSlyLLJ = dir850 >= 170 && dir850 <= 250 && mix850 >= 25;
+      const lljNote  = isSlyLLJ
+        ? ` *** SOUTHERLY LLJ: ${mix850}kt @ 850mb (${dir850}°) — when inversion mixes out, NBM surface gusts will be significantly too low; expect ${Math.round(mix850*0.85)}-${mix850}kt surface gusts ***`
+        : ` — afternoon mixing gust potential ~${Math.round(mix850*0.9)}-${mix850}kt when BL well-mixed`;
+      lines.push(`  850mb wind: ${mix850}kt @ ${dir850}°${lljNote}`);
+      if(mix925 > 0) lines.push(`  925mb wind: ${mix925}kt @ ${dir925}° (low-level shear layer)`);
     }
     if(d.lapseRate850_500) lines.push(`  Lapse rate 850-500: ${d.lapseRate850_500}°C/km${parseFloat(d.lapseRate850_500)>7?' (steep — convective potential)':''}`);
     if(d.tdDep700)         lines.push(`  700mb moisture: Td depression ${d.tdDep700}°C${parseFloat(d.tdDep700)<5?' (moist layer)':' (dry midlevels)'}`);
@@ -2093,6 +2194,9 @@ ${formatFrontoForAFD(live)}
 ====== MOS GUIDANCE ======
 ${formatMOSForAFD(live)}
 
+====== ENSEMBLE / HIGH-RES GUIDANCE (HREF · RRFS · GEFS · EPS · CMC · EPSai · GEPSai) ======
+${formatEnsembleForAFD(live) || 'Not provided — paste from Pivotal/AWIPS in the Ensembles tab and click Save.'}
+
 ====== SURFACE OBSERVATIONS (BOX TAF stations) ======
 ${formatMetarsForAFD(live)}
 
@@ -2116,14 +2220,30 @@ If NBM shows "not loaded", respond: "⚠ Load Model Guidance first." and stop.
 Rules:
 - All QPF, snow, wind, and temperature values must cite the NBM/HRRR numbers above
 - HRRR takes precedence over NBM for the next 18h
-- NBM GUST BIAS: NBM significantly underpredicts afternoon surface gusts in well-mixed,
-  sunny boundary layers. When sky is clear/mostly clear AND it is afternoon (15-22Z):
-  * If 850mb wind from sounding > NBM surface gust → use 850mb wind as gust estimate
-  * Otherwise apply ~1.5-1.6x factor to NBM wind speed as gust floor
-  * This is a known systematic NBM bias — always flag it in the AFD with a NOTE: line
+- NBM GUST BIAS — TWO KEY CASES (both require NOTE: in AFD):
+  1. DAYTIME CONVECTIVE MIXING: NBM underpredicts afternoon surface gusts when sky
+     is clear/mostly clear and BL is well-mixed (15-22Z). Use 850mb wind as gust
+     target — surface gusts can reach 85-100% of 850mb wind in deep mixed layers.
+     Apply ~1.5-1.6x factor to NBM wind speed as gust floor.
+  2. SOUTHERLY LLJ MIX-OUT: When a southerly LLJ exists (850mb wind S/SW >= 25kt)
+     and surface winds back to southerly with acceleration, NBM badly underpredicts
+     the gust surge as the nocturnal/morning inversion erodes. This is a pre-frontal
+     signature — surface gusts can briefly approach 850mb wind speeds (80-100% of
+     850mb wind) during the mix-out period. If sounding shows S/SW 850mb wind >= 25kt
+     with surface temps rising (inversion eroding), flag this explicitly and boost
+     NBM gust forecast by 30-50% for the mix-out window.
 - Soundings drive precip-type decisions — cite 700mb temp, warm nose, dendritic zone
 - Frontogenesis data informs banding potential and timing of wind shifts
 - Do NOT apply coastal temperature moderation — high-res models are accurate
+- ENSEMBLE GUIDANCE: When HREF/RRFS/GEFS/EPS/CMC/EPSai/GEPSai data is provided above,
+  treat it as high-value input alongside NBM:
+  * HREF/RRFS: high-res ensemble — weight heavily for convective initiation, QPF placement,
+    precip type transitions, and mesoscale features NBM smooths over
+  * GEFS/EPS/CMC: global ensemble spread — use for confidence assessment and scenario range;
+    wide spread = low confidence, flag explicitly
+  * EPSai/GEPSai: AI-postprocessed ensemble — typically sharper and better calibrated than
+    raw ensemble; treat as a premium guidance source, note where it diverges from NBM
+  * Always cite which model you are drawing from (e.g. "HREF shows..." "EPS spread suggests...")
 - Apply BOX bias corrections ONLY when data supports:
     * Banding: ONLY if 700mb temp in dendritic zone (-12 to -18°C) AND QPF > 0.5"
     * Rain/snow line: ONLY if thermal profile supports mixed precip
@@ -2153,6 +2273,9 @@ ${formatHRRRForAFD(live)}
 
 ====== SOUNDINGS ======
 ${formatSoundingsForAFD(live)}
+
+====== ENSEMBLE GUIDANCE (HREF · RRFS · GEFS · EPS · CMC · EPSai · GEPSai) ======
+${formatEnsembleForAFD(live) || 'Not provided.'}
 
 ====== SURFACE OBS ======
 ${formatMetarsForAFD(live)}
