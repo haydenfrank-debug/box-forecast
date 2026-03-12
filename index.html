@@ -1,8 +1,3 @@
-bash
-
-cat /mnt/user-data/outputs/index.html
-Output
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -732,47 +727,61 @@ async function nwsGet(url) {
 
 async function fetchMetar(sta) {
   try {
-    const d = await nwsGet(`${NWS}/stations/${sta}/observations/latest`);
-    const p = d.properties;
-    const tc = p.temperature?.value;
-    const dc = p.dewpoint?.value;
-    const ws = p.windSpeed?.value;
-    const wg = p.windGust?.value;
-    const wd = p.windDirection?.value;
-    const vi = p.visibility?.value;
-    const sky = p.cloudLayers || [];
-    const wx  = (p.presentWeather||[]).map(w=>w.rawString).filter(Boolean).join(' ');
-    const tf  = tc!=null ? Math.round(tc*9/5+32) : '?';
-    const df  = dc!=null ? Math.round(dc*9/5+32) : '?';
-    // Parse wind from raw METAR -- API fields are unreliable
-    // Strategy: find the wind group by looking for KT in the METAR body (before RMK)
+    // Fetch raw METAR from aviationweather.gov (most reliable for raw string)
+    // and NWS API in parallel for temp/dewpoint/sky/wx
+    const [awcResp, nwsData] = await Promise.all([
+      fetch(`https://aviationweather.gov/api/data/metar?ids=${sta}&format=raw&hours=2`).catch(()=>null),
+      nwsGet(`${NWS}/stations/${sta}/observations/latest`).catch(()=>null),
+    ]);
+
+    // Parse raw METAR from aviationweather.gov
+    let rawMETAR = '';
+    if(awcResp && awcResp.ok) {
+      const txt = await awcResp.text();
+      // Response is plain text, one METAR per line — grab first non-empty line containing station
+      const lines = txt.split('\n').map(l=>l.trim()).filter(l=>l.startsWith(sta));
+      if(lines.length) rawMETAR = lines[0];
+    }
+
+    // Fall back to NWS rawMessage if AWC failed
+    const p = nwsData?.properties || {};
+    if(!rawMETAR && p.rawMessage) rawMETAR = p.rawMessage;
+
+    // Parse wind from raw METAR string
     let wdir = 'VRB', wspd = 0, wgst = 0;
-    if(p.rawMessage) {
-      // Strip remarks section so RMK tokens don't interfere
-      const body = p.rawMessage.split(' RMK')[0];
-      // Match: 3-digit direction OR VRB, then 2-3 digit speed, optional gust, then KT
+    if(rawMETAR) {
+      const body = rawMETAR.split(' RMK')[0];
       const wndMatch = body.match(/\b(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT\b/);
       if(wndMatch) {
         wdir = wndMatch[1];
         wspd = parseInt(wndMatch[2]) || 0;
         wgst = wndMatch[3] ? parseInt(wndMatch[3]) : 0;
       }
-      // Handle calm winds: 00000KT
-      if(body.match(/\b00000KT\b/)) { wdir = '000'; wspd = 0; wgst = 0; }
+      if(body.match(/\b00000KT\b/)) { wdir = 'CALM'; wspd = 0; wgst = 0; }
     }
-    // If raw parse still gives 0 sustained, fall back to API (km/h -> kt)
-    if(wspd === 0 && ws != null && ws > 0) wspd = Math.round(ws/1.852);
-    if(wgst === 0 && wg != null && wg > 0) wgst = Math.round(wg/1.852);
-    if(wdir === 'VRB' && wd != null && wd > 0) wdir = String(Math.round(wd)).padStart(3,'0');
-    const vsm  = vi!=null ? Math.round(vi/160934)/10 : '?';
+    // Last resort: NWS API fields (km/h -> kt)
+    if(wspd === 0 && p.windSpeed?.value > 0) wspd = Math.round(p.windSpeed.value/1.852);
+    if(wgst === 0 && p.windGust?.value > 0)  wgst = Math.round(p.windGust.value/1.852);
+    if(wdir === 'VRB' && p.windDirection?.value > 0) wdir = String(Math.round(p.windDirection.value)).padStart(3,'0');
+
+    // Temp/dewpoint from NWS API (most reliable structured source)
+    const tc = p.temperature?.value;
+    const dc = p.dewpoint?.value;
+    const vi = p.visibility?.value;
+    const sky = p.cloudLayers || [];
+    const wx  = (p.presentWeather||[]).map(w=>w.rawString).filter(Boolean).join(' ');
+    const tf  = tc!=null ? Math.round(tc*9/5+32) : '?';
+    const df  = dc!=null ? Math.round(dc*9/5+32) : '?';
+    const vsm = vi!=null ? Math.round(vi/160934)/10 : '?';
     const skyStr = sky.map(l=>{ const b=l.base?.value; return b!=null?`${l.amount}${String(Math.round(b*3.28084/100)).padStart(3,'0')}`:''; }).filter(Boolean).join(' ') || 'SKC';
     const windStr = `${wdir}/${wspd}KT${wgst?'G'+wgst+'KT':''}`;
+
     return {
-      raw: p.rawMessage||'',
+      raw: rawMETAR,
       sta, tf, df, wx, windStr, wspd, wgst, vsm, skyStr,
       summary:`${sta}: ${tf}°F/${df}°F  Wind:${windStr}  Vis:${vsm}SM  Sky:${skyStr}${wx?' Wx:'+wx:''}  [${(p.timestamp||'').substring(0,16).replace('T',' ')} UTC]`
     };
-  } catch(e) { return {sta, tf:'?', df:'?', wx:'', windStr:'VRB/??', wspd:0, wgst:0, vsm:'?', skyStr:'', summary:`${sta}: fetch error`, raw:''}; }
+  } catch(e) { return {sta, tf:'?', df:'?', wx:'', windStr:'ERR', wspd:0, wgst:0, vsm:'?', skyStr:'', summary:`${sta}: fetch error`, raw:''}; }
 }
 
 async function fetchAFD() {
@@ -1845,6 +1854,5 @@ setTimeout(()=>{
 </script>
 </body>
 </html>
-Done
-There's the full code — select all and paste into GitHub!
+
 
