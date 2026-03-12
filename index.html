@@ -1661,8 +1661,16 @@ async function fetchModelData() {
     showToast(`Model data loaded — NDFD ${ndfdOk}/${ndfdResults.length} pts · MOS ${mosResults.filter(r=>r.text).length} stns · CAM ${camOk}/4 · ${namGfsResults.length} text products`, false);
 
   } catch(e) {
-    document.getElementById('mp-ndfd').innerHTML = `<div class="model-loading" style="color:var(--alert)">Error: ${e.message}</div>`;
-    showToast('Model data error: ' + e.message, true);
+    const msg = e.message || String(e);
+    document.getElementById('mp-ndfd').innerHTML = `<div class="model-loading" style="color:var(--alert)">
+      <b>Fetch error:</b> ${msg}<br><br>
+      <span style="color:var(--muted)">Common causes:<br>
+      • NWS API temporarily down (check api.weather.gov)<br>
+      • Browser blocked the request (check DevTools Console)<br>
+      • Rate limited — wait 30s and try again</span>
+    </div>`;
+    showToast('Model error: ' + msg, true);
+    console.error('fetchModelData error:', e);
   }
 
   if(btn)  { btn.textContent = '⟳ Refresh'; btn.disabled = false; }
@@ -1783,6 +1791,13 @@ function renderNDFDPanel() {
   if(!points.length) { document.getElementById('mp-ndfd').innerHTML = '<div class="model-loading">No data</div>'; return; }
 
   let html = '';
+  // Show a summary error count at top if any failed
+  const errPts = points.filter(p=>p.error);
+  const okPts  = points.filter(p=>!p.error);
+  if(errPts.length) {
+    html += `<div style="background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.25);border-radius:3px;padding:6px 8px;margin-bottom:6px;font-family:var(--mono);font-size:9px;color:var(--alert)">
+      ${errPts.length}/${points.length} points failed:<br>${errPts.map(p=>`<b>${p.name}</b>: ${p.error}`).join('<br>')}</div>`;
+  }
   points.forEach(p => {
     const hasErr = !!p.error;
     html += `<div style="padding:4px 0;border-bottom:1px solid rgba(26,45,69,.5)">
