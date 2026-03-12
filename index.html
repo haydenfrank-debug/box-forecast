@@ -1242,25 +1242,27 @@ async function fetchNDFDPoint(name, lat, lon) {
     // QPF/Snow: NWS gridded values use ISO8601 duration-coded intervals
     // Each record covers PT1H, PT6H, PT12H etc — value is rate for that period
     // Must weight by duration to get total accumulation
-    const parseDurationHours = (validTime) => {
-      if(!validTime) return 1;
-      const m = validTime.match(/PT(\d+)H/);
-      return m ? parseInt(m[1]) : 1;
-    };
+    // Filter gridded values to next 48h by validTime
+    // Each record has validTime like "2026-03-12T06:00:00+00:00/PT6H"
+    // The interval duration is encoded after "/" — we must NOT use slice(0,48)
+    // because each record may cover PT6H or PT12H, so 48 records = up to 576 hours!
+    const cutoff48h = new Date(now.getTime() + 48*3600000);
+    const filterTo48h = (vals) => vals.filter(v => {
+      if(!v.validTime) return false;
+      const tStr = v.validTime.split('/')[0];
+      return new Date(tStr) < cutoff48h;
+    });
 
-    const qpfVals = (props.quantitativePrecipitation||{}).values||[];
-    // QPF values are in mm, each covering parseDurationHours hours
-    // Sum mm*hours/hours = total mm over period (values are already totals per interval, not rates)
-    const totalQPFmm = qpfVals.slice(0,48).reduce((s,v)=>s+(v.value||0),0);
-    const totalQPF = Math.min(10, totalQPFmm * 0.0393701); // mm→in, cap at 10" sanity
+    const qpfVals = filterTo48h((props.quantitativePrecipitation||{}).values||[]);
+    const totalQPFmm = qpfVals.reduce((s,v)=>s+(v.value||0),0);
+    const totalQPF = Math.min(10, totalQPFmm * 0.0393701); // mm→in
 
-    const snowVals = (props.snowfallAmount||{}).values||[];
-    const totalSnowMm = snowVals.slice(0,48).reduce((s,v)=>s+(v.value||0),0);
-    const totalSnow = Math.min(36, totalSnowMm * 0.0393701); // mm→in (same as QPF — API returns mm liquid equiv)
+    const snowVals = filterTo48h((props.snowfallAmount||{}).values||[]);
+    const totalSnowMm = snowVals.reduce((s,v)=>s+(v.value||0),0);
+    const totalSnow = Math.min(24, totalSnowMm * 0.0393701); // mm→in, cap 24"
 
-    // PoP
-    const popVals = (props.probabilityOfPrecipitation||{}).values||[];
-    const maxPoP = popVals.slice(0,48).reduce((mx,v)=>Math.max(mx,v.value||0),0);
+    // PoP — also filtered to 48h
+    const maxPoP = popVals48.reduce((mx,v)=>Math.max(mx,v.value||0),0);
 
     // Max wind gust — derive from windSpeed in hourly periods (reliable mph strings)
     // windGust field is often null in periods; windSpeed is always populated
@@ -1411,13 +1413,19 @@ async function fetchNBMPoint(name, lat, lon) {
     const avgSky = skyVals.slice(0,24).length
       ? Math.round(skyVals.slice(0,24).reduce((a,v)=>a+(v.value||0),0)/skyVals.slice(0,24).length) : null;
 
-    // QPF total
-    const qpfVals = (props.quantitativePrecipitation||{}).values||[];
-    const totalQPF = qpfVals.slice(0,24).reduce((s,v)=>s+(v.value||0),0)*0.0393701;
+    // QPF total — filter to next 24h by validTime (not slice — each record may be PT6H)
+    const now24 = new Date();
+    const cut24h = new Date(now24.getTime() + 24*3600000);
+    const filter24 = (vals) => vals.filter(v => {
+      if(!v.validTime) return false;
+      return new Date(v.validTime.split('/')[0]) < cut24h;
+    });
+    const qpfVals = filter24((props.quantitativePrecipitation||{}).values||[]);
+    const totalQPF = Math.min(8, qpfVals.reduce((s,v)=>s+(v.value||0),0)*0.0393701);
 
     // Snow
-    const snowVals = (props.snowfallAmount||{}).values||[];
-    const totalSnow = snowVals.slice(0,24).reduce((s,v)=>s+(v.value||0),0)*0.393701;
+    const snowVals = filter24((props.snowfallAmount||{}).values||[]);
+    const totalSnow = Math.min(16, snowVals.reduce((s,v)=>s+(v.value||0),0)*0.0393701);
 
     const gustSpreadCapped = Math.max(0, maxGustCapped - avgGust);
     return { name, lat, lon, maxPop, maxGust: maxGustCapped, avgGust, gustSpread: gustSpreadCapped, tMax, tMin, avgSky,
