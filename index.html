@@ -769,7 +769,10 @@ function dismissModal() {
 // ─── NWS API FETCH ───────────────────────────────────────────────────────────
 async function nwsGet(url) {
   const r = await fetch(url, { headers:{'User-Agent':'WFO-BOX-ForecastAssist/3 (browser)'} });
-  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  if(!r.ok) {
+    console.error(`nwsGet FAILED: ${r.status} ${r.statusText} — ${url}`);
+    throw new Error(`HTTP ${r.status} — ${url.substring(0,80)}`);
+  }
   return r.json();
 }
 
@@ -1239,40 +1242,23 @@ async function fetchNDFDPoint(name, lat, lon) {
       });
     }
 
-    // QPF/Snow: NWS gridded values use ISO8601 duration-coded intervals
-    // Each record covers PT1H, PT6H, PT12H etc — value is rate for that period
-    // Must weight by duration to get total accumulation
-    // Filter gridded values to next 48h by validTime
-    // Each record has validTime like "2026-03-12T06:00:00+00:00/PT6H"
-    // The interval duration is encoded after "/" — we must NOT use slice(0,48)
-    // because each record may cover PT6H or PT12H, so 48 records = up to 576 hours!
-    const cutoff48h = new Date(now.getTime() + 48*3600000);
-    const filterTo48h = (vals) => vals.filter(v => {
-      if(!v.validTime) return false;
-      const tStr = v.validTime.split('/')[0];
-      return new Date(tStr) < cutoff48h;
-    });
+    // QPF/Snow/PoP from gridded properties
+    // NWS API: quantitativePrecipitation in wmoUnit:mm, snowfallAmount in wmoUnit:mm
+    // Values are totals per interval (not rates) — sum directly, convert mm->in
+    // Use first 12 records only (covers ~48-72h at PT6H spacing, well within event window)
+    const qpfVals  = ((props.quantitativePrecipitation||{}).values||[]).slice(0,12);
+    const totalQPF = Math.min(10, qpfVals.reduce((s,v)=>s+(v.value||0),0) * 0.0393701);
 
-    const qpfVals = filterTo48h((props.quantitativePrecipitation||{}).values||[]);
-    const totalQPFmm = qpfVals.reduce((s,v)=>s+(v.value||0),0);
-    // QPF uom is wmoUnit:mm — convert mm→in
-    const totalQPF = Math.min(10, totalQPFmm * 0.0393701);
+    const snowVals = ((props.snowfallAmount||{}).values||[]).slice(0,12);
+    const snowUom  = (props.snowfallAmount||{}).uom || '';
+    const snowRaw  = snowVals.reduce((s,v)=>s+(v.value||0),0);
+    // Handle both mm and m units defensively
+    const totalSnow = Math.min(24, snowUom.includes('[in_i]')
+      ? snowRaw
+      : snowRaw * 0.0393701);  // mm→in (if somehow m, result will be tiny — safe)
 
-    const snowVals = filterTo48h((props.snowfallAmount||{}).values||[]);
-    const totalSnowRaw = snowVals.reduce((s,v)=>s+(v.value||0),0);
-    // NWS snowfallAmount uom is wmoUnit:m (METERS of snow, not mm!)
-    // Check uom to pick correct conversion
-    const snowUom = (props.snowfallAmount||{}).uom || '';
-    const snowInches = snowUom.includes('mm')
-      ? totalSnowRaw * 0.0393701          // mm → in
-      : snowUom.includes('[in_i]')
-        ? totalSnowRaw                     // already inches
-        : totalSnowRaw * 39.3701;          // meters → in (default: wmoUnit:m)
-    const totalSnow = Math.min(24, snowInches);
-
-    // PoP — filtered to 48h
-    const popVals48 = filterTo48h((props.probabilityOfPrecipitation||{}).values||[]);
-    const maxPoP = popVals48.reduce((mx,v)=>Math.max(mx,v.value||0),0);
+    const popVals = ((props.probabilityOfPrecipitation||{}).values||[]).slice(0,12);
+    const maxPoP  = popVals.reduce((mx,v)=>Math.max(mx,v.value||0),0);
 
     // Max wind gust — derive from windSpeed in hourly periods (reliable mph strings)
     // windGust field is often null in periods; windSpeed is always populated
@@ -1293,6 +1279,7 @@ async function fetchNDFDPoint(name, lat, lon) {
 
     return { name, lat, lon, blocks, totalQPF: totalQPF.toFixed(2), totalSnow: totalSnow.toFixed(1), snowUom, maxPoP, maxGust: Math.round(maxGust), minTF, gridId, gridX, gridY, raw: props };
   } catch(e) {
+    console.error(`fetchNDFDPoint(${name}):`, e);
     return { name, lat, lon, blocks:[], totalQPF:'?', totalSnow:'?', maxPoP:0, maxGust:0, error:e.message };
   }
 }
