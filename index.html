@@ -1256,7 +1256,7 @@ async function fetchNDFDPoint(name, lat, lon) {
 
     const snowVals = (props.snowfallAmount||{}).values||[];
     const totalSnowMm = snowVals.slice(0,48).reduce((s,v)=>s+(v.value||0),0);
-    const totalSnow = Math.min(36, totalSnowMm * 0.393701); // mm→in (10:1 ratio), cap 36"
+    const totalSnow = Math.min(36, totalSnowMm * 0.0393701); // mm→in (same as QPF — API returns mm liquid equiv)
 
     // PoP
     const popVals = (props.probabilityOfPrecipitation||{}).values||[];
