@@ -459,7 +459,7 @@ select.fi option { background: var(--panel2); }
         </div>
         <div class="pane-body">
           <div class="out-block" id="out-block">
-<span class="out-ph">AFD output will appear here.<br><br>1. Click <strong style="color:var(--accent2)">⟳ Refresh Live Data</strong> — loads METARs, current AFD, alerts<br>2. Click <strong style="color:var(--accent)">📡 Load Model Guidance</strong> — loads NDFD grids, MOS, soundings<br>3. Add any forecaster notes, then click <strong style="color:var(--accent)">▶ Run AI Assist</strong><br><br>The AFD is written entirely from NDFD + MOS + obs data.</span>
+<span class="out-ph">AFD output will appear here.<br><br><strong style="color:var(--alert)">⚠ You must load model data before running or the AI will hallucinate values.</strong><br><br>1. Click <strong style="color:var(--accent2)">⟳ Refresh Live Data</strong> — loads METARs, current AFD, alerts<br>2. Click <strong style="color:var(--accent)">📡 Load Model Guidance</strong> — loads NDFD grids, MOS, soundings<br>3. Optionally add forecaster notes<br>4. Click <strong style="color:var(--accent)">▶ Run AI Assist</strong></span>
           </div>
           <div id="bias-display"></div>
           <div id="drive-result"></div>
@@ -1089,6 +1089,12 @@ async function runTask() {
     const el = document.getElementById('f_'+field.id);
     f[field.id] = el ? el.value.trim() : '';
   });
+
+  // Warn if running AFD without model data loaded
+  if((currentTask === 'afd' || currentTask === 'afd_avn') && !liveData.modelLoaded) {
+    const proceed = confirm('⚠ Model guidance not loaded!\n\nWithout NDFD data the AI may fabricate forecast values.\n\nClick OK to run anyway, or Cancel and load model guidance first (📡 Load Model Guidance).');
+    if(!proceed) { btn.disabled = false; btn.textContent = '▶ Run AI Assist'; return; }
+  }
 
   const promptText = task.prompt(f, liveData);
 
@@ -2145,20 +2151,28 @@ ${f.forecaster_notes || 'None'}
 ${f.extra_guidance || 'None provided'}
 
 INSTRUCTIONS:
-Write the requested AFD sections based entirely on the NDFD, sounding, MOS, and obs data above.
-Format requirements:
+CRITICAL — YOUR ONLY SOURCE OF TRUTH IS THE DATA ABOVE. DO NOT USE YOUR TRAINING KNOWLEDGE FOR ANY FORECAST VALUES.
+
+If the NDFD section above says "NDFD not loaded" or shows no QPF/snow values, you MUST begin your response with:
+"⚠ MODEL DATA NOT LOADED — Run '📡 Load Model Guidance' first, then re-run. I will not fabricate forecast values."
+...and then STOP. Do not write any forecast amounts.
+
+If NDFD data IS present, follow these rules strictly:
+- Every snowfall amount, QPF value, wind speed, and temperature MUST come directly from the NDFD data shown above
+- Quote the actual NDFD numbers (e.g. "NDFD shows QPF=0.45 inches at Boston")
+- Do NOT round up or increase amounts beyond what the data shows unless applying a named BOX bias correction
+- If NDFD shows 0.00 inches QPF, say "no precipitation in the NDFD guidance" — do not invent snow
+- If NDFD shows no snow, there is no snow in this forecast — period
 - Use NWS AFD standard formatting with section headers (.SYNOPSIS, .SHORT TERM, .LONG TERM, etc.)
-- Write in concise operational meteorology style — no fluff, no hedging without basis
-- NDFD data drives the forecast. Where NDFD shows spread or uncertainty, flag it explicitly.
-- Apply ALL applicable BOX bias corrections (listed in your system context):
-    * If dendritic zone active: note banding potential, adjust QPF upward 2-4"
-    * If warm nose detected: apply FZRA/sleet cold layer threshold
-    * If NW flow + KACK/KMVY: add 5-10kt to NDFD gust for Cape/Islands
-    * If coastal zones: shift rain/snow line 20-40mi NW of model
-    * If rapid deepening: add 2-3ft to SWH for offshore ANZ zones
-- After each section, add a one-line CONFIDENCE rating with reasoning
+- Write in concise operational meteorology style
+- Apply BOX bias corrections ONLY when the underlying NDFD data supports it:
+    * Banding bias: ONLY if NDFD QPF > 0.5" AND dendritic zone active in sounding
+    * Rain/snow line: ONLY if NDFD shows precip AND thermal profile supports mixed precip
+    * Cape/Islands NW gust: ONLY if NDFD winds are NW and > 20kt
+    * Marine SWH: ONLY if deepening rate provided and > 20mb/24hr
+- After each section, add one-line CONFIDENCE rating
 - End each section with &&
-- Flag which BOX biases were applied with NOTE: lines`;
+- Flag every BOX bias applied with NOTE: line including the NDFD base value you started from`;
 }
 
 function buildAvnMarinePrompt(f, live) {
