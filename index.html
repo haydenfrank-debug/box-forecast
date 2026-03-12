@@ -758,14 +758,14 @@ AFD: ${f.afd}
 TAFs: ${f.tafs}
 MARINE CWF: ${f.cwf}
 WWA HEADLINES: ${f.wwas}
-OUTPUT: List all inconsistencies (timing, precip type, wind speeds, totals). Flag HIGH/MEDIUM/LOW priority. Draft corrected language for all HIGH priority issues.\`
+OUTPUT: List all inconsistencies (timing, precip type, wind speeds, totals). Flag HIGH/MEDIUM/LOW priority. Draft corrected language for all HIGH priority issues.`
   },
 
   zone7day: {
     name: '7-Day Zone Forecast — All Locations',
     fields: [
       {id:'forecaster_notes', label:'Forecaster Notes / Overrides', type:'ta',
-        ph:'Key overrides, confidence notes — e.g. "low confidence day 5-7", "cap coast snow 3-5\"", "front timing uncertain"...'},
+        ph:'Key overrides, confidence notes - e.g. low confidence day 5-7, cap coast snow 3-5in, front timing uncertain...'},
       {id:'extra_guidance', label:'Additional Guidance (optional)', type:'ta',
         ph:'Extra model text, ensemble output, or station-specific notes not already in the model panel...'},
     ],
@@ -2044,10 +2044,7 @@ function formatEnsembleForAFD(live) {
   ];
   const filled = sections.filter(s => ens[s.key]?.trim());
   if(!filled.length) return '';
-  return filled.map(s => `[${s.label}]
-${ens[s.key].trim()}`).join('
-
-');
+  return filled.map(s => `[${s.label}]\n${ens[s.key].trim()}`).join('\n\n');
 }
 
 // ─── SCENARIO DETECTION ───────────────────────────────────────────────────────
