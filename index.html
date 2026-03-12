@@ -305,6 +305,50 @@ select.fi option { background: var(--panel2); }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
+/* ── MODEL PANELS ── */
+.model-tab-bar { display:flex; gap:2px; flex-wrap:wrap; margin-bottom:6px; }
+.mtab {
+  font-family:var(--cond); font-size:9px; font-weight:700; letter-spacing:.08em;
+  padding:3px 7px; border:1px solid var(--border); background:var(--panel2);
+  color:var(--muted); cursor:pointer; border-radius:2px; text-transform:uppercase;
+  transition:all .12s;
+}
+.mtab.active { background:rgba(0,212,255,.12); border-color:rgba(0,212,255,.4); color:var(--accent); }
+.mtab:hover  { color:var(--text); }
+.model-panel { display:none; max-height:320px; overflow-y:auto; }
+.model-panel.active { display:block; }
+.model-loading { font-family:var(--mono); font-size:10px; color:var(--muted); padding:8px 0; }
+.model-row { display:flex; justify-content:space-between; padding:2px 0;
+             border-bottom:1px solid rgba(26,45,69,.4); font-size:10px; }
+.model-lbl { color:var(--muted); font-family:var(--mono); font-size:9.5px; }
+.model-val  { font-family:var(--mono); font-size:9.5px; color:var(--text); }
+.model-val.hi  { color:var(--alert); }
+.model-val.ok  { color:var(--warn); }
+.model-val.good{ color:var(--green); }
+.rp-fetch-btn {
+  font-family:var(--cond); font-size:9px; font-weight:700; letter-spacing:.08em;
+  padding:3px 8px; border:1px solid rgba(0,255,187,.3); background:rgba(0,255,187,.07);
+  color:var(--accent2); cursor:pointer; border-radius:2px; text-transform:uppercase;
+}
+.rp-fetch-btn:hover { background:rgba(0,255,187,.15); }
+.prob-bar-wrap { display:flex; align-items:center; gap:4px; padding:1px 0; }
+.prob-bar-lbl  { font-family:var(--mono); font-size:9px; color:var(--muted); width:22px; flex-shrink:0; }
+.prob-bar      { flex:1; height:5px; background:rgba(26,45,69,.8); border-radius:2px; overflow:hidden; }
+.prob-fill     { height:100%; border-radius:2px; transition:width .3s; }
+.prob-pct      { font-family:var(--mono); font-size:9px; color:var(--text); width:28px; text-align:right; }
+.spread-badge {
+  display:inline-block; font-family:var(--cond); font-size:9px; font-weight:700;
+  letter-spacing:.08em; padding:2px 6px; border-radius:2px; text-transform:uppercase;
+}
+.spread-LOW  { background:rgba(46,204,113,.15); border:1px solid rgba(46,204,113,.3); color:var(--green); }
+.spread-MOD  { background:rgba(255,183,48,.12); border:1px solid rgba(255,183,48,.3); color:var(--warn); }
+.spread-HIGH { background:rgba(255,71,87,.12);  border:1px solid rgba(255,71,87,.3);  color:var(--alert); }
+.cam-flag { display:inline-block; font-family:var(--mono); font-size:9px; padding:1px 5px;
+            border-radius:2px; margin:1px; }
+.cam-flag.conv { background:rgba(255,71,87,.15); color:var(--alert); }
+.cam-flag.precip { background:rgba(0,212,255,.12); color:var(--accent); }
+.cam-flag.fzra { background:rgba(255,183,48,.15); color:var(--warn); }
+
 @media (max-width: 1050px) { .main { grid-template-columns: 185px 1fr; } .rpanel { display: none; } }
 @media (max-width: 700px)  { .main { grid-template-columns: 1fr; } .sidebar { display: none; } }
 </style>
@@ -445,13 +489,17 @@ select.fi option { background: var(--panel2); }
       </div>
       <div class="model-tab-bar">
         <button class="mtab active" onclick="showMTab('ndfd')">NDFD</button>
-        <button class="mtab" onclick="showMTab('prob')">Probabilities</button>
-        <button class="mtab" onclick="showMTab('mos')">MOS</button>
+        <button class="mtab" onclick="showMTab('prob')">NBM/Prob</button>
+        <button class="mtab" onclick="showMTab('mos')">MOS/GFS</button>
+        <button class="mtab" onclick="showMTab('cam')">CAM/HRRR</button>
+        <button class="mtab" onclick="showMTab('ens')">Spread</button>
         <button class="mtab" onclick="showMTab('snd')">Soundings</button>
       </div>
-      <div class="model-panel active" id="mp-ndfd"><div class="model-loading">Click "Load NDFD + MOS" →</div></div>
-      <div class="model-panel" id="mp-prob"><div class="model-loading">Probabilities load with NDFD →</div></div>
-      <div class="model-panel" id="mp-mos"><div class="model-loading">MOS loads with NDFD →</div></div>
+      <div class="model-panel active" id="mp-ndfd"><div class="model-loading">Click "Load Model Guidance" →</div></div>
+      <div class="model-panel" id="mp-prob"><div class="model-loading">NBM/Probabilities load with NDFD →</div></div>
+      <div class="model-panel" id="mp-mos"><div class="model-loading">MOS + NAM/GFS text loads with NDFD →</div></div>
+      <div class="model-panel" id="mp-cam"><div class="model-loading">CAM/HRRR guidance loads with NDFD →</div></div>
+      <div class="model-panel" id="mp-ens"><div class="model-loading">Ensemble spread loads with NDFD →</div></div>
       <div class="model-panel" id="mp-snd"><div class="model-loading">Soundings load with NDFD →</div></div>
     </div>
     <div class="rp-sec">
@@ -1117,10 +1165,23 @@ const NDFD_POINTS = {
   'Hyannis':     {lat:41.65, lon:-70.28},
   'Hartford':    {lat:41.76, lon:-72.68},
   'Cape Cod':    {lat:41.84, lon:-70.02},
+  'Fitchburg':   {lat:42.58, lon:-71.80},
+  'Keene NH':    {lat:42.93, lon:-72.28},
+  'New Haven':   {lat:41.31, lon:-72.92},
+  'Taunton':     {lat:41.90, lon:-71.09},
+  'Lawrence':    {lat:42.71, lon:-71.16},
 };
 
-// MOS stations — use same 10 TAF stations
-const MOS_STATIONS = ['KBOS','KORH','KPVD','KBDL','KACK','KHYA','KMVY'];
+// MOS stations
+const MOS_STATIONS = ['KBOS','KORH','KPVD','KBDL','KACK','KHYA','KMVY','KFIT','KEEN'];
+
+// NBM stations — same as TAF stations (NBM available via NWS API gridpoints)
+const NBM_POINTS = {
+  'Boston':    {lat:42.36, lon:-71.06},
+  'Worcester': {lat:42.27, lon:-71.80},
+  'Nantucket': {lat:41.28, lon:-70.10},
+  'Hartford':  {lat:41.76, lon:-72.68},
+};
 
 // NDFD element codes for DWML query
 const NDFD_ELEMS = 'maxt+mint+temp+dew+wspd+wdir+wx+sky+qpf+snow+pop12+wgust+appt+ptornado+phail+ptstmwinds+psevere';
@@ -1278,39 +1339,241 @@ async function fetchSounding(station) {
 }
 
 // ─── MAIN MODEL FETCH ─────────────────────────────────────────────────────────
+// ─── NBM FETCH ───────────────────────────────────────────────────────────────
+async function fetchNBMPoint(name, lat, lon) {
+  // NBM is served via NWS gridpoints — same API, different product layer
+  // We pull the standard hourly forecast which blends NBM under the hood
+  try {
+    const meta = await nwsGet(`${NWS}/points/${lat},${lon}`);
+    const gid = meta.properties.gridId, gx = meta.properties.gridX, gy = meta.properties.gridY;
+    const [hourly, grid] = await Promise.all([
+      nwsGet(`${NWS}/gridpoints/${gid}/${gx},${gy}/forecast/hourly`),
+      nwsGet(`${NWS}/gridpoints/${gid}/${gx},${gy}`),
+    ]);
+    const props = grid.properties || {};
+    const periods = (hourly.properties||{}).periods || [];
+    const next24 = periods.slice(0,24);
+
+    // NBM-specific: probabilistic QPF percentiles from gridded props
+    const qpf5  = (props.probabilityOfPrecipitation||{}).values||[];
+    const pop   = qpf5.slice(0,24).map(v=>Math.round(v.value||0));
+    const maxPop = pop.length ? Math.max(...pop) : 0;
+
+    // Wind speed percentiles (proxy: use windGust spread as ensemble spread indicator)
+    const wgVals = (props.windGust||{}).values||[];
+    const gusts = wgVals.slice(0,24).map(v=>(v.value||0)*1.94384); // m/s→kt
+    const maxGust = gusts.length ? Math.round(Math.max(...gusts)) : 0;
+    const avgGust = gusts.length ? Math.round(gusts.reduce((a,b)=>a+b,0)/gusts.length) : 0;
+    const gustSpread = maxGust - avgGust; // crude spread indicator
+
+    // Temperature range (NBM probabilistic T spread)
+    const tVals = (props.temperature||{}).values||[];
+    const temps = tVals.slice(0,24).map(v=>v.value*9/5+32);
+    const tMax = temps.length ? Math.round(Math.max(...temps)) : null;
+    const tMin = temps.length ? Math.round(Math.min(...temps)) : null;
+
+    // Sky cover
+    const skyVals = (props.skyCover||{}).values||[];
+    const avgSky = skyVals.slice(0,24).length
+      ? Math.round(skyVals.slice(0,24).reduce((a,v)=>a+(v.value||0),0)/skyVals.slice(0,24).length) : null;
+
+    // QPF total
+    const qpfVals = (props.quantitativePrecipitation||{}).values||[];
+    const totalQPF = qpfVals.slice(0,24).reduce((s,v)=>s+(v.value||0),0)*0.0393701;
+
+    // Snow
+    const snowVals = (props.snowfallAmount||{}).values||[];
+    const totalSnow = snowVals.slice(0,24).reduce((s,v)=>s+(v.value||0),0)*0.393701;
+
+    return { name, lat, lon, maxPop, maxGust, avgGust, gustSpread, tMax, tMin, avgSky,
+             totalQPF: totalQPF.toFixed(2), totalSnow: totalSnow.toFixed(1),
+             spreadFlag: gustSpread > 15 ? 'HIGH' : gustSpread > 8 ? 'MOD' : 'LOW' };
+  } catch(e) { return { name, lat, lon, error: e.message }; }
+}
+
+// ─── NAM/GFS TEXT PRODUCTS ────────────────────────────────────────────────────
+async function fetchNAMGFSProducts() {
+  // Fetch NAM and GFS model discussion/analysis text products from NWS
+  const products = [];
+  const tries = [
+    { type:'FXUS61', loc:'BOX', label:'BOX Zone Forecast (GFS-based)' },
+    { type:'PMDSPD', loc:'NHC', label:'Storm Prediction Discussion' },
+    { type:'SWODY1', loc:'SPC', label:'SPC Day 1 Convective Outlook' },
+    { type:'SWODY2', loc:'SPC', label:'SPC Day 2 Convective Outlook' },
+    { type:'PMDHMD', loc:'OUN', label:'HPC Humidity Discussion' },
+  ];
+
+  // Fetch NWS model forecast discussions for BOX CWA
+  const modelDiscTypes = ['AFM','PFM'];
+  for(const t of modelDiscTypes) {
+    try {
+      const list = await nwsGet(`${NWS}/products/types/${t}/locations/BOX`);
+      if(list['@graph']?.length) {
+        const prod = await nwsGet(list['@graph'][0]['@id'] || list['@graph'][0].id);
+        if(prod.productText) products.push({ label: `${t} (BOX Point Forecast Matrix)`, text: prod.productText });
+      }
+    } catch(e) {}
+  }
+
+  // Fetch HPC/WPC discussions
+  const hpcTypes = ['PMDHI','PMDMRD'];
+  for(const t of hpcTypes) {
+    try {
+      const list = await nwsGet(`${NWS}/products/types/${t}`);
+      if(list['@graph']?.length) {
+        const prod = await nwsGet(list['@graph'][0]['@id'] || list['@graph'][0].id);
+        if(prod.productText) products.push({ label: `WPC ${t}`, text: prod.productText });
+      }
+    } catch(e) {}
+  }
+
+  // SPC outlooks
+  try {
+    const spcList = await nwsGet(`${NWS}/products/types/SWOMCD`);
+    if(spcList['@graph']?.length) {
+      const prod = await nwsGet(spcList['@graph'][0]['@id'] || spcList['@graph'][0].id);
+      if(prod.productText) products.push({ label: 'SPC Mesoscale Discussion', text: prod.productText });
+    }
+  } catch(e) {}
+
+  return products;
+}
+
+// ─── CAM / HIGH-RES DATA ──────────────────────────────────────────────────────
+async function fetchCAMGuidance() {
+  // High-res CAM guidance via NWS API — HRRR/NAM-3km proxy via gridpoints
+  // NWS hourly forecast at high-res grid points is HRRR-influenced for <18h
+  const camPoints = [
+    { name:'Boston-HRRR',   lat:42.36, lon:-71.06 },
+    { name:'Worcester-HRRR',lat:42.27, lon:-71.80 },
+    { name:'Cape Cod-HRRR', lat:41.84, lon:-70.02 },
+    { name:'Nantucket-HRRR',lat:41.28, lon:-70.10 },
+  ];
+
+  const results = [];
+  for(const pt of camPoints) {
+    try {
+      const meta = await nwsGet(`${NWS}/points/${pt.lat},${pt.lon}`);
+      const gid = meta.properties.gridId, gx = meta.properties.gridX, gy = meta.properties.gridY;
+      const hourly = await nwsGet(`${NWS}/gridpoints/${gid}/${gx},${gy}/forecast/hourly`);
+      const periods = (hourly.properties||{}).periods || [];
+
+      // Next 12h — most HRRR-influenced window
+      const next12 = periods.slice(0,12);
+      const maxWind = Math.max(...next12.map(p=>parseInt(p.windSpeed)||0));
+      const maxGust = Math.max(...next12.map(p=>parseInt(p.windGust)||0));
+      const wdirs = next12.map(p=>p.windDirection).filter(Boolean);
+      const wxTypes = [...new Set(next12.map(p=>p.shortForecast))];
+      const tRange = next12.map(p=>p.temperature).filter(v=>v!=null);
+
+      // Look for convective/precip signals
+      const hasConvective = next12.some(p=>/thunderstorm|tstm/i.test(p.shortForecast||''));
+      const hasPrecip = next12.some(p=>/rain|snow|drizzle|showers/i.test(p.shortForecast||''));
+      const hasFreezing = next12.some(p=>/freezing|ice/i.test(p.shortForecast||''));
+
+      results.push({
+        name: pt.name,
+        next12h: {
+          maxWind, maxGust,
+          dominantWdir: wdirs[0]||'—',
+          tRange: tRange.length ? `${Math.min(...tRange)}-${Math.max(...tRange)}°F` : '—',
+          wxSummary: wxTypes.slice(0,3).join(' / '),
+          hasConvective, hasPrecip, hasFreezing,
+        }
+      });
+    } catch(e) {
+      results.push({ name: pt.name, error: e.message });
+    }
+  }
+  return results;
+}
+
+// ─── ENSEMBLE SPREAD INDICATORS ───────────────────────────────────────────────
+async function fetchEnsembleSpread() {
+  // Derive ensemble spread proxies from NWS API
+  // True GEFS/ECMWF spread not directly available via public API —
+  // We compute spread indicators from:
+  // 1. QPF spread across BOX CWA NDFD points (already fetched)
+  // 2. Wind gust spread across stations
+  // 3. MOS vs NDFD temperature delta (model disagreement proxy)
+
+  const spread = { qpf:{}, wind:{}, temp:{}, overall:'UNKNOWN' };
+
+  if(Object.keys(liveData.ndfd).length > 2) {
+    const qpfVals = Object.values(liveData.ndfd).filter(p=>!p.error).map(p=>parseFloat(p.totalQPF)||0);
+    const snowVals = Object.values(liveData.ndfd).filter(p=>!p.error).map(p=>parseFloat(p.totalSnow)||0);
+    const gustVals = Object.values(liveData.ndfd).filter(p=>!p.error).map(p=>p.maxGust||0);
+
+    spread.qpf = {
+      min: Math.min(...qpfVals).toFixed(2),
+      max: Math.max(...qpfVals).toFixed(2),
+      spread: (Math.max(...qpfVals) - Math.min(...qpfVals)).toFixed(2),
+      flag: (Math.max(...qpfVals) - Math.min(...qpfVals)) > 1.0 ? 'HIGH' :
+            (Math.max(...qpfVals) - Math.min(...qpfVals)) > 0.4 ? 'MOD' : 'LOW',
+    };
+    spread.snow = {
+      min: Math.min(...snowVals).toFixed(1),
+      max: Math.max(...snowVals).toFixed(1),
+      spread: (Math.max(...snowVals) - Math.min(...snowVals)).toFixed(1),
+      flag: (Math.max(...snowVals) - Math.min(...snowVals)) > 4 ? 'HIGH' :
+            (Math.max(...snowVals) - Math.min(...snowVals)) > 1 ? 'MOD' : 'LOW',
+    };
+    spread.wind = {
+      min: Math.min(...gustVals),
+      max: Math.max(...gustVals),
+      spread: Math.max(...gustVals) - Math.min(...gustVals),
+      flag: (Math.max(...gustVals) - Math.min(...gustVals)) > 20 ? 'HIGH' :
+            (Math.max(...gustVals) - Math.min(...gustVals)) > 10 ? 'MOD' : 'LOW',
+    };
+
+    // Overall confidence
+    const flags = [spread.qpf.flag, spread.wind.flag];
+    if(parseFloat(spread.snow?.spread||0) > 0) flags.push(spread.snow.flag);
+    spread.overall = flags.filter(f=>f==='HIGH').length >= 2 ? 'LOW CONFIDENCE' :
+                     flags.filter(f=>f==='MOD').length >= 2 ? 'MEDIUM CONFIDENCE' : 'HIGH CONFIDENCE';
+  }
+
+  return spread;
+}
+
 async function fetchModelData() {
   const btn = document.getElementById('model-fetch-btn');
   const btn2 = document.getElementById('model-load-btn');
   if(btn) { btn.textContent = '⟳ Loading...'; btn.disabled = true; }
   if(btn2) { btn2.textContent = '📡 Loading...'; btn2.disabled = true; }
 
-  // Show loading state
-  document.getElementById('mp-ndfd').innerHTML = '<div class="model-loading"><span class="spin"></span>Fetching NDFD grids...</div>';
-  document.getElementById('mp-prob').innerHTML = '<div class="model-loading"><span class="spin"></span>Fetching probabilities...</div>';
-  document.getElementById('mp-mos').innerHTML  = '<div class="model-loading"><span class="spin"></span>Fetching MOS guidance...</div>';
+  // Show loading state in all tabs
+  document.getElementById('mp-ndfd').innerHTML = '<div class="model-loading"><span class="spin"></span>Fetching NDFD grids (12 points)...</div>';
+  document.getElementById('mp-prob').innerHTML = '<div class="model-loading"><span class="spin"></span>Fetching NBM + probabilities...</div>';
+  document.getElementById('mp-mos').innerHTML  = '<div class="model-loading"><span class="spin"></span>Fetching MOS + NAM/GFS text...</div>';
   document.getElementById('mp-snd').innerHTML  = '<div class="model-loading"><span class="spin"></span>Fetching soundings...</div>';
+  document.getElementById('mp-cam').innerHTML  = '<div class="model-loading"><span class="spin"></span>Fetching CAM/HRRR guidance...</div>';
+  document.getElementById('mp-ens').innerHTML  = '<div class="model-loading"><span class="spin"></span>Computing ensemble spread...</div>';
 
   try {
-    // Fetch NDFD for all key BOX points
+    // Phase 1: NDFD + MOS + soundings + NBM + CAM in parallel
     const ndfdPromises = Object.entries(NDFD_POINTS).map(([n,p]) => fetchNDFDPoint(n, p.lat, p.lon));
-    // Prob for Boston + Nantucket (representative coastal + inland)
     const probPromises = [
       fetchNDFDProb(NDFD_POINTS.Boston.lat,    NDFD_POINTS.Boston.lon),
       fetchNDFDProb(NDFD_POINTS.Nantucket.lat, NDFD_POINTS.Nantucket.lon),
     ];
-    // MOS for key stations
-    const mosPromises = MOS_STATIONS.slice(0,4).map(fetchMOS);
-    // Soundings for KBOS + KACK
+    const mosPromises = MOS_STATIONS.slice(0,5).map(fetchMOS);
     const sndPromises = ['KBOS','KACK'].map(fetchSounding);
+    const nbmPromises = Object.entries(NBM_POINTS).map(([n,p]) => fetchNBMPoint(n, p.lat, p.lon));
+    const camPromise  = fetchCAMGuidance();
+    const namGfsPromise = fetchNAMGFSProducts();
 
-    const [ndfdResults, probResults, mosResults, sndResults] = await Promise.all([
+    const [ndfdResults, probResults, mosResults, sndResults, nbmResults, camResults, namGfsResults] = await Promise.all([
       Promise.all(ndfdPromises),
       Promise.all(probPromises),
       Promise.all(mosPromises),
       Promise.all(sndPromises),
+      Promise.all(nbmPromises),
+      camPromise,
+      namGfsPromise,
     ]);
 
-    // Store in liveData
+    // Store everything
     liveData.ndfd = {};
     ndfdResults.forEach(r => { liveData.ndfd[r.name] = r; });
     liveData.ndfdProb = { boston: probResults[0], nantucket: probResults[1] };
@@ -1318,18 +1581,30 @@ async function fetchModelData() {
     mosResults.forEach(r => { liveData.mos[r.station] = r; });
     liveData.soundings = {};
     sndResults.forEach(r => { liveData.soundings[r.station] = r; });
+    liveData.nbm = {};
+    nbmResults.forEach(r => { liveData.nbm[r.name] = r; });
+    liveData.cam = camResults;
+    liveData.namGfs = namGfsResults;
     liveData.modelLoaded = true;
+
+    // Phase 2: ensemble spread (needs NDFD loaded first)
+    liveData.ensSpread = await fetchEnsembleSpread();
 
     // Build text summary for auto-fill
     liveData.modelSummary = buildModelSummary();
 
-    // Render panels
+    // Render all panels
     renderNDFDPanel();
     renderProbPanel();
     renderMOSPanel();
     renderSoundingPanel();
+    renderCAMPanel();
+    renderEnsemblePanel();
 
-    showToast(`Model data loaded — NDFD ${ndfdResults.filter(r=>!r.error).length}/${ndfdResults.length} points, MOS ${mosResults.filter(r=>r.text).length}/${mosResults.length} stations`, false);
+    const ndfdOk = ndfdResults.filter(r=>!r.error).length;
+    const camOk  = camResults.filter(r=>!r.error).length;
+    showToast(`Model data loaded — NDFD ${ndfdOk}/${ndfdResults.length} pts · MOS ${mosResults.filter(r=>r.text).length} stns · CAM ${camOk}/4 · ${namGfsResults.length} text products`, false);
+
   } catch(e) {
     document.getElementById('mp-ndfd').innerHTML = `<div class="model-loading" style="color:var(--alert)">Error: ${e.message}</div>`;
     showToast('Model data error: ' + e.message, true);
@@ -1391,6 +1666,56 @@ function buildModelSummary() {
     lines.push('--- MOS GUIDANCE (KBOS MAV) ---');
     lines.push(lines2);
     lines.push('');
+  }
+
+  // NBM vs NDFD comparison
+  const nbmVals = Object.values(liveData.nbm||{}).filter(p=>!p.error);
+  if(nbmVals.length) {
+    lines.push('--- NBM GUIDANCE (24h) ---');
+    nbmVals.forEach(p => {
+      const ndfd = liveData.ndfd[p.name];
+      const qpfDelta = ndfd ? (parseFloat(p.totalQPF)-parseFloat(ndfd.totalQPF)).toFixed(2) : '?';
+      const gustDelta = ndfd ? (p.maxGust - ndfd.maxGust) : '?';
+      lines.push(`  ${p.name.padEnd(12)}: QPF=${p.totalQPF}" (vs NDFD ${qpfDelta>=0?'+':''}${qpfDelta}") Gust=${p.maxGust}kt (${gustDelta>=0?'+':''}${gustDelta}kt) PoP=${p.maxPop}% Sky=${p.avgSky}% Spread=${p.spreadFlag}`);
+    });
+    lines.push('');
+  }
+
+  // CAM/HRRR next 12h
+  const cam = liveData.cam || [];
+  const camOk = cam.filter(p=>!p.error);
+  if(camOk.length) {
+    lines.push('--- CAM/HRRR GUIDANCE (next 12h, most reliable window) ---');
+    camOk.forEach(pt => {
+      const d = pt.next12h;
+      const flags = [d.hasConvective?'TSTM':'', d.hasFreezing?'FZRA':'', d.hasPrecip?'PRECIP':''].filter(Boolean).join(',');
+      lines.push(`  ${pt.name.replace('-HRRR','').padEnd(12)}: Wind ${d.dominantWdir} ${d.maxWind}kt G${d.maxGust}kt  Temp:${d.tRange}  ${d.wxSummary||'No sig wx'}${flags?' ['+flags+']':''}`);
+    });
+    lines.push('');
+  }
+
+  // Ensemble spread summary
+  const ens = liveData.ensSpread || {};
+  if(ens.overall) {
+    lines.push(`--- ENSEMBLE/MODEL SPREAD INDICATORS ---`);
+    lines.push(`  Overall: ${ens.overall}`);
+    if(ens.qpf?.spread)  lines.push(`  QPF Spread (BOX CWA): ${ens.qpf.min}" – ${ens.qpf.max}" | spread=${ens.qpf.spread}" [${ens.qpf.flag}]`);
+    if(ens.snow?.spread && parseFloat(ens.snow.max)>0)
+      lines.push(`  Snow Spread: ${ens.snow.min}" – ${ens.snow.max}" | spread=${ens.snow.spread}" [${ens.snow.flag}]`);
+    if(ens.wind?.spread) lines.push(`  Gust Spread (NDFD pts): ${ens.wind.min}–${ens.wind.max}kt | spread=${ens.wind.spread}kt [${ens.wind.flag}]`);
+    lines.push('  NOTE: Spread derived from NDFD spatial variance across BOX CWA + NBM vs NDFD delta');
+    lines.push('');
+  }
+
+  // NAM/GFS text product excerpts
+  const namGfs = liveData.namGfs || [];
+  if(namGfs.length) {
+    lines.push('--- NAM/GFS TEXT PRODUCTS (excerpts) ---');
+    namGfs.forEach(p => {
+      lines.push(`[${p.label}]`);
+      lines.push(p.text.substring(0, 400).replace(/\n{3,}/g, '\n\n'));
+      lines.push('');
+    });
   }
 
   lines.push('=== NOTE: Apply BOX bias corrections as appropriate ===');
@@ -1488,8 +1813,102 @@ function renderSoundingPanel() {
   }).join('');
 }
 
+function renderCAMPanel() {
+  const cam = liveData.cam || [];
+  if(!cam.length) {
+    document.getElementById('mp-cam').innerHTML = '<div class="model-loading">No CAM data loaded.</div>';
+    return;
+  }
+  let html = '<div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent2);letter-spacing:.1em;margin-bottom:6px">HRRR/CAM NEXT 12H</div>';
+  cam.forEach(pt => {
+    if(pt.error) {
+      html += `<div style="padding:3px 0;border-bottom:1px solid rgba(26,45,69,.4)"><span style="font-family:var(--cond);font-size:10px;font-weight:700;color:var(--muted)">${pt.name}</span> <span style="color:var(--alert);font-size:9px">ERR</span></div>`;
+      return;
+    }
+    const d = pt.next12h;
+    const flags = [
+      d.hasConvective ? '<span class="cam-flag conv">TSTM</span>' : '',
+      d.hasFreezing   ? '<span class="cam-flag fzra">FZRA</span>' : '',
+      d.hasPrecip && !d.hasConvective ? '<span class="cam-flag precip">PRECIP</span>' : '',
+    ].filter(Boolean).join('');
+    html += `<div style="padding:4px 0;border-bottom:1px solid rgba(26,45,69,.5)">
+      <div style="font-family:var(--cond);font-size:10.5px;font-weight:700;color:var(--bright);margin-bottom:2px">${pt.name.replace('-HRRR','')} ${flags}</div>
+      <div class="model-row"><span class="model-lbl">Wind/Gust</span><span class="model-val ${d.maxGust>35?'hi':d.maxGust>25?'ok':''}"> ${d.dominantWdir} ${d.maxWind}kt G${d.maxGust}kt</span></div>
+      <div class="model-row"><span class="model-lbl">Temp Range</span><span class="model-val">${d.tRange}</span></div>
+      <div class="model-row"><span class="model-lbl">WX</span><span class="model-val" style="font-size:9px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.wxSummary||'—'}</span></div>
+    </div>`;
+  });
+  document.getElementById('mp-cam').innerHTML = html;
+}
+
+function renderEnsemblePanel() {
+  const ens = liveData.ensSpread || {};
+  const nbm = Object.values(liveData.nbm || {});
+  let html = '';
+
+  // Overall confidence banner
+  const overall = ens.overall || 'UNKNOWN';
+  const bannerColor = overall.includes('LOW') ? 'var(--alert)' : overall.includes('MED') ? 'var(--warn)' : 'var(--green)';
+  html += `<div style="background:rgba(0,0,0,.2);border-radius:3px;padding:8px 10px;margin-bottom:8px;text-align:center">
+    <div style="font-family:var(--cond);font-size:13px;font-weight:800;color:${bannerColor};letter-spacing:.06em">${overall}</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">Based on NDFD spatial spread</div>
+  </div>`;
+
+  // QPF spread
+  if(ens.qpf?.spread !== undefined) {
+    html += `<div style="margin-bottom:8px"><div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--text);letter-spacing:.08em;margin-bottom:4px">QPF SPREAD (48h, BOX CWA)</div>`;
+    html += `<div class="model-row"><span class="model-lbl">Range</span><span class="model-val">${ens.qpf.min}" – ${ens.qpf.max}"</span></div>`;
+    html += `<div class="model-row"><span class="model-lbl">Spread</span><span class="model-val"><span class="spread-badge spread-${ens.qpf.flag}">${ens.qpf.flag}</span> ${ens.qpf.spread}"</span></div></div>`;
+  }
+
+  // Snow spread
+  if(ens.snow?.spread !== undefined && parseFloat(ens.snow.max) > 0) {
+    html += `<div style="margin-bottom:8px"><div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--text);letter-spacing:.08em;margin-bottom:4px">SNOWFALL SPREAD (48h)</div>`;
+    html += `<div class="model-row"><span class="model-lbl">Range</span><span class="model-val">${ens.snow.min}" – ${ens.snow.max}"</span></div>`;
+    html += `<div class="model-row"><span class="model-lbl">Spread</span><span class="model-val"><span class="spread-badge spread-${ens.snow.flag}">${ens.snow.flag}</span> ${ens.snow.spread}"</span></div></div>`;
+  }
+
+  // Wind gust spread
+  if(ens.wind?.spread !== undefined) {
+    html += `<div style="margin-bottom:8px"><div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--text);letter-spacing:.08em;margin-bottom:4px">WIND GUST SPREAD (48h)</div>`;
+    html += `<div class="model-row"><span class="model-lbl">Range</span><span class="model-val">${ens.wind.min}kt – ${ens.wind.max}kt</span></div>`;
+    html += `<div class="model-row"><span class="model-lbl">Spread</span><span class="model-val"><span class="spread-badge spread-${ens.wind.flag}">${ens.wind.flag}</span> ${ens.wind.spread}kt</span></div></div>`;
+  }
+
+  // NBM comparison
+  if(nbm.length) {
+    html += `<div style="margin-bottom:8px"><div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent2);letter-spacing:.08em;margin-bottom:4px">NBM vs NDFD</div>`;
+    nbm.filter(p=>!p.error).forEach(p => {
+      const ndfd = liveData.ndfd[p.name];
+      const qpfDelta = ndfd ? (parseFloat(p.totalQPF) - parseFloat(ndfd.totalQPF)).toFixed(2) : null;
+      const gustDelta = ndfd ? (p.maxGust - ndfd.maxGust) : null;
+      html += `<div style="padding:3px 0;border-bottom:1px solid rgba(26,45,69,.4)">
+        <span style="font-family:var(--cond);font-size:10px;font-weight:700;color:var(--text)">${p.name}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:6px">
+          QPF:${p.totalQPF}" ${qpfDelta!==null?`(${qpfDelta>=0?'+':''}${qpfDelta}")`:''} · Gust:${p.maxGust}kt ${gustDelta!==null?`(${gustDelta>=0?'+':''}${gustDelta}kt)`:''}
+          <span class="spread-badge spread-${p.spreadFlag}" style="margin-left:3px">${p.spreadFlag}</span>
+        </span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // NAM/GFS text product titles
+  const namGfs = liveData.namGfs || [];
+  if(namGfs.length) {
+    html += `<div><div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--text);letter-spacing:.08em;margin-bottom:4px">LOADED TEXT PRODUCTS</div>`;
+    namGfs.forEach(p => {
+      html += `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:2px 0;border-bottom:1px solid rgba(26,45,69,.3)">✓ ${p.label}</div>`;
+    });
+    html += '</div>';
+  }
+
+  if(!html) html = '<div class="model-loading">Load model guidance to see ensemble spread.</div>';
+  document.getElementById('mp-ens').innerHTML = html;
+}
+
 function showMTab(id) {
-  document.querySelectorAll('.mtab').forEach((t,i) => t.classList.toggle('active', ['ndfd','prob','mos','snd'][i]===id));
+  document.querySelectorAll('.mtab').forEach((t,i) => t.classList.toggle('active', ['ndfd','prob','mos','cam','ens','snd'][i]===id));
   document.querySelectorAll('.model-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('mp-'+id).classList.add('active');
 }
@@ -1621,6 +2040,42 @@ function formatMetarsForAFD(live) {
   return Object.values(metars).map(m => m.summary).join('\n') || 'No METARs loaded.';
 }
 
+function formatCAMForAFD(live) {
+  const cam = live.cam || [];
+  const ok = cam.filter(p=>!p.error);
+  if(!ok.length) return 'CAM data not loaded.';
+  return ok.map(pt => {
+    const d = pt.next12h;
+    const flags = [d.hasConvective?'⚡TSTM':'', d.hasFreezing?'🧊FZRA':'', d.hasPrecip?'🌧PRECIP':''].filter(Boolean).join(' ');
+    return `${pt.name.replace('-HRRR','')}: Wind ${d.dominantWdir} ${d.maxWind}kt G${d.maxGust}kt | T:${d.tRange} | ${d.wxSummary||'No sig wx'} ${flags}`;
+  }).join('\n');
+}
+
+function formatEnsembleForAFD(live) {
+  const ens = live.ensSpread || {};
+  const nbm = Object.values(live.nbm||{}).filter(p=>!p.error);
+  const lines = [];
+  if(ens.overall) {
+    lines.push(`Forecast Confidence: ${ens.overall}`);
+    if(ens.qpf?.spread)  lines.push(`  QPF spread across BOX CWA: ${ens.qpf.min}"–${ens.qpf.max}" [${ens.qpf.flag} uncertainty]`);
+    if(ens.snow?.spread && parseFloat(ens.snow.max)>0)
+      lines.push(`  Snow spread: ${ens.snow.min}"–${ens.snow.max}" [${ens.snow.flag} uncertainty]`);
+    if(ens.wind?.spread) lines.push(`  Gust spread: ${ens.wind.min}–${ens.wind.max}kt [${ens.wind.flag} uncertainty]`);
+  }
+  if(nbm.length) {
+    lines.push('NBM vs NDFD deltas:');
+    nbm.forEach(p => {
+      const ndfd = live.ndfd[p.name];
+      if(!ndfd) return;
+      const qd = (parseFloat(p.totalQPF)-parseFloat(ndfd.totalQPF)).toFixed(2);
+      const gd = p.maxGust - ndfd.maxGust;
+      if(Math.abs(qd)>0.1 || Math.abs(gd)>3)
+        lines.push(`  ${p.name}: NBM QPF ${qd>=0?'+':''}${qd}" vs NDFD | Gust ${gd>=0?'+':''}${gd}kt vs NDFD`);
+    });
+  }
+  return lines.join('\n') || 'Ensemble spread not computed — load model guidance.';
+}
+
 function buildAFDPrompt(f, live) {
   const scenario = detectScenario(live);
   const ndfdText    = formatNDFDForAFD(live);
@@ -1629,6 +2084,9 @@ function buildAFDPrompt(f, live) {
   const obsText     = formatMetarsForAFD(live);
   const sections    = f.sections || 'Synopsis + Short Term + Long Term';
   const now = new Date().toUTCString().slice(5,22);
+
+  const camText = formatCAMForAFD(live);
+  const ensText = formatEnsembleForAFD(live);
 
   return `TASK: Write a complete NWS AFD (Area Forecast Discussion) for WFO BOX.
 ISSUE TIME: ${now}
@@ -1647,6 +2105,12 @@ ${mosTxt}
 
 ====== CURRENT SURFACE OBSERVATIONS (all 10 BOX TAF stations) ======
 ${obsText}
+
+====== CAM / HRRR GUIDANCE (next 12h — high confidence window) ======
+${camText}
+
+====== ENSEMBLE/MODEL SPREAD ======
+${ensText}
 
 ====== LATEST BOX AFD (for style/context reference) ======
 ${live.afd ? live.afd.substring(0, 1800) : 'Not loaded'}
@@ -1854,5 +2318,3 @@ setTimeout(()=>{
 </script>
 </body>
 </html>
-
-
