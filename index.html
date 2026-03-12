@@ -1217,7 +1217,10 @@ async function fetchNDFDPoint(name, lat, lon) {
       const temps  = chunk.map(p=>p.temperature).filter(v=>v!=null);
       // windSpeed/windGust in periods are strings like "23 mph" — convert to kt
       const winds  = chunk.map(p=>Math.round((parseInt(p.windSpeed)||0)*0.868976));
-      const gusts  = chunk.map(p=>Math.round((parseInt(p.windGust)||0)*0.868976));
+      // windGust often null — use speed*1.4 as proxy when missing
+      const gusts  = chunk.map(p=> p.windGust
+        ? Math.round(parseInt(p.windGust)*0.868976)
+        : Math.round((parseInt(p.windSpeed)||0)*1.4*0.868976));
       const wdirs  = chunk.map(p=>p.windDirection||'').filter(Boolean);
       const sky    = chunk.map(p=>p.shortForecast||'');
       blocks.push({
@@ -1242,17 +1245,18 @@ async function fetchNDFDPoint(name, lat, lon) {
     const popVals = (props.probabilityOfPrecipitation||{}).values||[];
     const maxPoP = popVals.slice(0,48).reduce((mx,v)=>Math.max(mx,v.value||0),0);
 
-    // Max wind gust — NWS gridded windGust is in m/s (despite API docs saying km/h)
-    // windSpeed in hourly periods is mph string; gridded props are m/s
-    // Cross-check: use hourly periods windSpeed (mph string) as primary, gridded as fallback
-    const gustVals = (props.windGust||{}).values||[];
-    const rawGustMs = gustVals.slice(0,48).reduce((mx,v)=>Math.max(mx,v.value||0),0);
-    // Determine unit: if raw value > 50, likely km/h; if > 30, likely m/s; 
-    // Hourly periods give mph strings — use those as ground truth
-    const periodGusts = periods.slice(0,48).map(p=>{ const n=parseInt(p.windGust)||0; return Math.round(n*0.868976); }); // mph→kt
-    const maxGustFromPeriods = periodGusts.length ? Math.max(...periodGusts) : 0;
-    // Use period-based gusts (reliable mph strings) if available, else convert gridded
-    const maxGust = Math.min(80, maxGustFromPeriods > 0 ? maxGustFromPeriods : rawGustMs * 0.514444); // fallback: m/s→kt
+    // Max wind gust — derive from windSpeed in hourly periods (reliable mph strings)
+    // windGust field is often null in periods; windSpeed is always populated
+    // Use windSpeed mph→kt, then apply 1.4x gust factor as proxy (standard met practice)
+    const periodSpeeds = periods.slice(0,48).map(p=>Math.round((parseInt(p.windSpeed)||0)*0.868976)); // mph→kt
+    const maxSpeed = periodSpeeds.length ? Math.max(...periodSpeeds) : 0;
+    // Also try period windGust strings where non-null
+    const periodGustRaw = periods.slice(0,48).map(p=>p.windGust ? Math.round(parseInt(p.windGust)*0.868976) : 0);
+    const maxGustFromPeriods = Math.max(...periodGustRaw);
+    // Use actual gust if reasonable (< 80kt), else use speed * 1.4, cap at 80kt
+    const maxGust = Math.min(80, maxGustFromPeriods > 5 && maxGustFromPeriods < 80
+      ? maxGustFromPeriods
+      : Math.round(maxSpeed * 1.4));
 
     // 850mb temp proxy from 2m min temp (crude but available)
     const minTemp = (props.minTemperature||{}).values||[];
@@ -1368,13 +1372,15 @@ async function fetchNBMPoint(name, lat, lon) {
     const pop   = qpf5.slice(0,24).map(v=>Math.round(v.value||0));
     const maxPop = pop.length ? Math.max(...pop) : 0;
 
-    // Wind speed percentiles — gridded windGust is in m/s, convert to kt
-    const wgVals = (props.windGust||{}).values||[];
-    const gusts = wgVals.slice(0,24).map(v=>(v.value||0)/1.852); // km/h→kt
-    const maxGust = gusts.length ? Math.round(Math.max(...gusts)) : 0;
-    const avgGust = gusts.length ? Math.round(gusts.reduce((a,b)=>a+b,0)/gusts.length) : 0;
-    // Sanity cap: real gusts rarely exceed 80kt for BOX CWA
-    const maxGustCapped = Math.min(maxGust, 80);
+    // Wind: use hourly periods windSpeed (mph strings) — most reliable source
+    const nbmPeriods = (hourly.properties||{}).periods||[];
+    const nbmSpeeds = nbmPeriods.slice(0,24).map(p=>Math.round((parseInt(p.windSpeed)||0)*0.868976));
+    const nbmGustsRaw = nbmPeriods.slice(0,24).map(p=>p.windGust?Math.round(parseInt(p.windGust)*0.868976):0);
+    const maxSpeed24 = nbmSpeeds.length ? Math.max(...nbmSpeeds) : 0;
+    const maxGustRaw = Math.max(...nbmGustsRaw);
+    const maxGust = 0; // placeholder reassigned below
+    const avgGust = nbmSpeeds.length ? Math.round(nbmSpeeds.reduce((a,b)=>a+b,0)/nbmSpeeds.length) : 0;
+    const maxGustCapped = Math.min(80, maxGustRaw > 5 && maxGustRaw < 80 ? maxGustRaw : Math.round(maxSpeed24 * 1.4));
     const gustSpread = maxGust - avgGust; // crude spread indicator
 
     // Temperature range (NBM probabilistic T spread)
@@ -1396,8 +1402,8 @@ async function fetchNBMPoint(name, lat, lon) {
     const snowVals = (props.snowfallAmount||{}).values||[];
     const totalSnow = snowVals.slice(0,24).reduce((s,v)=>s+(v.value||0),0)*0.393701;
 
-    const gustSpreadCapped = maxGustCapped - avgGust;
-    return { name, lat, lon, maxPop, maxGust: maxGustCapped, avgGust, gustSpread: Math.max(0,gustSpreadCapped), tMax, tMin, avgSky,
+    const gustSpreadCapped = Math.max(0, maxGustCapped - avgGust);
+    return { name, lat, lon, maxPop, maxGust: maxGustCapped, avgGust, gustSpread: gustSpreadCapped, tMax, tMin, avgSky,
              totalQPF: totalQPF.toFixed(2), totalSnow: totalSnow.toFixed(1),
              spreadFlag: gustSpreadCapped > 15 ? 'HIGH' : gustSpreadCapped > 8 ? 'MOD' : 'LOW' };
   } catch(e) { return { name, lat, lon, error: e.message }; }
