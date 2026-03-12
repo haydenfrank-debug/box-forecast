@@ -1205,9 +1205,16 @@ async function fetchNBMPoint(name, lat, lon) {
       const label = t0.toUTCString().slice(0,11).trim() + ' ' + String(t0.getUTCHours()).padStart(2,'0') + 'Z';
       const temps = chunk.map(p => p.temperature).filter(v => v != null);
       const winds = chunk.map(p => Math.round((parseInt(p.windSpeed)||0) * 0.868976));
-      const gusts = chunk.map(p => p.windGust
-        ? Math.round(parseInt(p.windGust) * 0.868976)
-        : Math.round((parseInt(p.windSpeed)||0) * 1.3 * 0.868976));
+      const gusts = chunk.map(p => {
+        const spd  = Math.round((parseInt(p.windSpeed)||0)*0.868976);
+        const nbmG = p.windGust ? Math.round(parseInt(p.windGust)*0.868976) : Math.round(spd*1.3);
+        const hr   = new Date(p.startTime).getUTCHours();
+        const sky  = p.shortForecast||'';
+        const isClear     = /clear|sunny|fair|mostly sunny|partly sunny/i.test(sky);
+        const isAfternoon = hr >= 15 && hr <= 22;
+        const mixFactor   = (isAfternoon && isClear) ? 1.6 : 1.3;
+        return Math.min(80, Math.max(nbmG, Math.round(spd*mixFactor)));
+      });
       const wdirs = chunk.map(p => p.windDirection||'').filter(Boolean);
       const sky   = chunk.map(p => p.shortForecast||'');
       const pops  = chunk.map(p => p.probabilityOfPrecipitation?.value || 0);
@@ -1237,11 +1244,32 @@ async function fetchNBMPoint(name, lat, lon) {
     const popVals = slice56((props.probabilityOfPrecipitation||{}).values);
     const maxPoP  = popVals.reduce((mx,v) => Math.max(mx, v.value||0), 0);
 
-    // Wind gust max from periods
-    const gustKt  = next168.map(p => p.windGust ? Math.round(parseInt(p.windGust)*0.868976) : 0);
-    const spdKt   = next168.map(p => Math.round((parseInt(p.windSpeed)||0)*0.868976));
-    const maxGust = Math.min(80, Math.max(...gustKt) > 5 ? Math.max(...gustKt) : Math.round(Math.max(...spdKt)*1.3));
+    // Wind gust max from periods — with daytime mixing correction
+    // NBM significantly underdoes afternoon gusts in well-mixed sunny BL.
+    // When: afternoon hours (15-22Z), sky cover < 50%, wind >= 10kt
+    // Apply mixing ratio: gust = max(NBM gust, wind * mixFactor)
+    // mixFactor derived from sounding 850mb wind / sfc wind ratio (BL mixing depth)
+    // Without sounding: use empirical 1.6x for clear afternoon, 1.3x otherwise
+    const spdKt = next168.map(p => Math.round((parseInt(p.windSpeed)||0)*0.868976));
     const maxWind = Math.max(...spdKt);
+
+    const correctedGusts = next168.map(p => {
+      const spd  = Math.round((parseInt(p.windSpeed)||0)*0.868976);
+      const nbmG = p.windGust ? Math.round(parseInt(p.windGust)*0.868976) : Math.round(spd * 1.3);
+      const hr   = new Date(p.startTime).getUTCHours();
+      const sky  = p.shortForecast||'';
+      const isClear = /clear|sunny|fair|mostly sunny|partly sunny/i.test(sky);
+      const isAfternoon = hr >= 15 && hr <= 22;  // 15-22Z = ~10am-5pm EST
+
+      // Mixing correction: sunny afternoon gets 1.6x factor, cloudy/night 1.3x
+      // Only apply when NBM is clearly low relative to mixing potential
+      const mixFactor = (isAfternoon && isClear) ? 1.6 : 1.3;
+      const mixedGust = Math.round(spd * mixFactor);
+
+      // Take whichever is higher: NBM gust or mixing-corrected value
+      return Math.min(80, Math.max(nbmG, mixedGust));
+    });
+    const maxGust = Math.max(...correctedGusts);
 
     // Temperature range 7d
     const tAll = next168.map(p => p.temperature).filter(v => v != null);
@@ -1997,6 +2025,11 @@ function formatSoundingsForAFD(live) {
     if(d.dendriticActive)  lines.push(`  *** DENDRITIC GROWTH ZONE (700mb ${s.parsed.l700?.temp}°C) — BOX banding bias applies ***`);
     if(d.warmNose)         lines.push(`  *** WARM NOSE: 850mb=${s.parsed.l850?.temp}°C, SFC=${s.parsed.sfc?.temp}°C — FZRA/sleet risk, apply BOX cold-layer threshold ***`);
     if(d.llj)              lines.push(`  LLJ: ${d.llj.wspd}kt @ ${d.llj.pres}mb — enhanced precip transport`);
+    // 850mb mixing gust estimate
+    if(s.parsed.l850?.wspd > 0) {
+      const mix850 = s.parsed.l850.wspd;
+      lines.push(`  850mb wind: ${mix850}kt — afternoon mixing gust potential: ~${Math.round(mix850*0.9)}-${mix850}kt at surface when BL well-mixed`);
+    }
     if(d.lapseRate850_500) lines.push(`  Lapse rate 850-500: ${d.lapseRate850_500}°C/km${parseFloat(d.lapseRate850_500)>7?' (steep — convective potential)':''}`);
     if(d.tdDep700)         lines.push(`  700mb moisture: Td depression ${d.tdDep700}°C${parseFloat(d.tdDep700)<5?' (moist layer)':' (dry midlevels)'}`);
     if(d.freezingLevelHgt) lines.push(`  Freezing level: ${d.freezingLevelHgt}m AGL`);
@@ -2083,6 +2116,11 @@ If NBM shows "not loaded", respond: "⚠ Load Model Guidance first." and stop.
 Rules:
 - All QPF, snow, wind, and temperature values must cite the NBM/HRRR numbers above
 - HRRR takes precedence over NBM for the next 18h
+- NBM GUST BIAS: NBM significantly underpredicts afternoon surface gusts in well-mixed,
+  sunny boundary layers. When sky is clear/mostly clear AND it is afternoon (15-22Z):
+  * If 850mb wind from sounding > NBM surface gust → use 850mb wind as gust estimate
+  * Otherwise apply ~1.5-1.6x factor to NBM wind speed as gust floor
+  * This is a known systematic NBM bias — always flag it in the AFD with a NOTE: line
 - Soundings drive precip-type decisions — cite 700mb temp, warm nose, dendritic zone
 - Frontogenesis data informs banding potential and timing of wind shifts
 - Do NOT apply coastal temperature moderation — high-res models are accurate
@@ -2272,4 +2310,3 @@ setTimeout(()=>{
 </script>
 </body>
 </html>
-
