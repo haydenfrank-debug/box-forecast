@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WFO BOX — AI Forecast Assist LIVE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Barlow+Condensed:wght@300;400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:       #080c17;
+  --surface:  #0c1220;
+  --panel:    #101828;
+  --panel2:   #131f30;
+  --border:   #1a2d45;
+  --border2:  #243a55;
+  --accent:   #00d4ff;
+  --accent2:  #00ffbb;
+  --warn:     #ffb830;
+  --alert:    #ff4757;
+  --muted:    #3d5a7a;
+  --text:     #b8cfe8;
+  --bright:   #e8f4ff;
+  --green:    #2ecc71;
+  --mono:     'Share Tech Mono', monospace;
+  --dm:       'DM Mono', monospace;
+  --cond:     'Barlow Condensed', sans-serif;
+  --sans:     'Barlow', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+}
+
+/* Subtle scan-line texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+  pointer-events: none; z-index: 0;
+}
+
+/* Grid backdrop */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.018) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none; z-index: 0;
+}
+
+.app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
+
+/* ── HEADER ── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px; height: 52px; flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(0,212,255,0.07) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.logo-pill {
+  background: var(--accent); color: var(--bg);
+  font-family: var(--cond); font-weight: 800; font-size: 11px; letter-spacing: 0.12em;
+  padding: 3px 9px; clip-path: polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);
+}
+
+.logo-name {
+  font-family: var(--cond); font-weight: 700; font-size: 17px; letter-spacing: 0.04em; color: var(--bright);
+}
+.logo-name em { color: var(--accent); font-style: normal; }
+
+.header-right { display: flex; align-items: center; gap: 16px; }
+
+.api-key-row { display: flex; align-items: center; gap: 8px; }
+
+.api-key-input {
+  background: var(--panel2); border: 1px solid var(--border2);
+  color: var(--text); font-family: var(--mono); font-size: 11px;
+  padding: 5px 10px; border-radius: 3px; width: 220px; outline: none;
+  transition: border-color .15s;
+}
+.api-key-input:focus { border-color: var(--accent); }
+.api-key-input::placeholder { color: var(--muted); }
+
+.hdr-btn {
+  font-family: var(--cond); font-weight: 700; font-size: 10px; letter-spacing: 0.1em;
+  padding: 5px 12px; border: 1px solid; cursor: pointer; text-transform: uppercase;
+  border-radius: 2px; transition: all .15s; white-space: nowrap;
+}
+.btn-accent { background: rgba(0,212,255,.1); border-color: rgba(0,212,255,.4); color: var(--accent); }
+.btn-accent:hover { background: rgba(0,212,255,.2); }
+.btn-green { background: rgba(0,255,187,.1); border-color: rgba(0,255,187,.35); color: var(--accent2); }
+.btn-green:hover { background: rgba(0,255,187,.2); }
+
+#clock { font-family: var(--mono); font-size: 12px; color: var(--bright); }
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; }
+.dot-pulse { background: var(--green); animation: pulse 2s infinite; }
+.dot-warn { background: var(--warn); }
+.dot-err  { background: var(--alert); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* ── METAR STRIP ── */
+.metar-strip {
+  display: flex; gap: 5px; padding: 5px 18px; overflow-x: auto; flex-shrink: 0;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+}
+.metar-strip::-webkit-scrollbar { display: none; }
+
+.mcell {
+  display: flex; flex-direction: column; align-items: flex-start;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 3px;
+  padding: 5px 10px; cursor: pointer; transition: border-color .12s; flex-shrink: 0;
+  min-width: 90px;
+}
+.mcell:hover { border-color: var(--accent); }
+.mcell .m-sta { font-family: var(--cond); font-weight: 700; font-size: 12px; color: var(--accent); letter-spacing: 0.05em; }
+.mcell .m-tmp { font-family: var(--mono); font-size: 10px; color: var(--warn); }
+.mcell .m-wnd { font-family: var(--mono); font-size: 10px; color: var(--accent2); }
+.mcell .m-wx  { font-family: var(--mono); font-size: 10px; color: var(--alert); }
+.mcell.loading { opacity: .4; }
+
+/* ── ALERT BAR ── */
+.alert-bar {
+  display: none; gap: 6px; padding: 4px 18px; overflow-x: auto; flex-shrink: 0;
+  background: rgba(255,183,48,.04); border-bottom: 1px solid rgba(255,183,48,.2);
+  scrollbar-width: none;
+}
+.alert-bar.active { display: flex; }
+.alert-pill {
+  font-family: var(--cond); font-weight: 700; font-size: 10px; letter-spacing: 0.07em;
+  padding: 3px 10px; border-radius: 2px; white-space: nowrap; text-transform: uppercase;
+  background: rgba(255,183,48,.12); border: 1px solid rgba(255,183,48,.3); color: var(--warn);
+}
+.alert-pill.sev { background: rgba(255,71,87,.12); border-color: rgba(255,71,87,.3); color: var(--alert); }
+
+/* ── MAIN LAYOUT ── */
+.main { display: grid; grid-template-columns: 200px 1fr 280px; flex: 1; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; }
+.sb-grp { border-bottom: 1px solid var(--border); padding: 8px 0; }
+.sb-lbl {
+  font-family: var(--cond); font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+  color: var(--muted); padding: 0 12px 6px; text-transform: uppercase;
+}
+.sb-btn {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  cursor: pointer; color: var(--text); font-family: var(--sans); font-size: 12px;
+  padding: 7px 12px; border-left: 2px solid transparent; transition: background .12s;
+  line-height: 1.3;
+}
+.sb-btn:hover { background: rgba(0,212,255,.05); }
+.sb-btn.active { background: rgba(0,212,255,.1); border-left-color: var(--accent); color: var(--bright); }
+
+/* ── CENTER ── */
+.center { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+
+.task-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px; border-bottom: 1px solid var(--border);
+  background: var(--surface); gap: 10px; flex-shrink: 0;
+}
+.task-name { font-family: var(--cond); font-weight: 700; font-size: 18px; color: var(--bright); }
+
+.bar-btns { display: flex; gap: 8px; flex-shrink: 0; }
+
+.workspace { flex: 1; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
+
+.pane { display: flex; flex-direction: column; overflow: hidden; }
+.pane-in  { border-right: 1px solid var(--border); }
+.pane-out { }
+
+.pane-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 14px; border-bottom: 1px solid var(--border); background: var(--panel); flex-shrink: 0;
+}
+.pane-lbl { font-family: var(--cond); font-size: 9px; font-weight: 700; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; }
+
+.pane-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ── FORM FIELDS ── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field-lbl {
+  font-size: 11.5px; color: var(--text); font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.auto-tag {
+  font-family: var(--cond); font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
+  background: rgba(0,255,187,.12); color: var(--accent2); border: 1px solid rgba(0,255,187,.25);
+  padding: 1px 5px; border-radius: 2px; text-transform: uppercase;
+}
+.fi {
+  background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+  font-family: var(--sans); font-size: 12.5px; padding: 7px 10px; border-radius: 3px;
+  width: 100%; outline: none; transition: border-color .15s;
+}
+.fi:focus { border-color: var(--accent); }
+.fi.autofilled { border-color: rgba(0,255,187,.4); background: rgba(0,255,187,.025); }
+textarea.fi { font-family: var(--mono); font-size: 11px; line-height: 1.65; resize: vertical; min-height: 76px; }
+select.fi option { background: var(--panel2); }
+
+.run-btn {
+  background: var(--accent); color: var(--bg);
+  font-family: var(--cond); font-weight: 800; font-size: 13px; letter-spacing: 0.08em;
+  padding: 9px 22px; border: none; cursor: pointer;
+  clip-path: polygon(7px 0%,100% 0%,calc(100% - 7px) 100%,0% 100%);
+  transition: opacity .15s; text-transform: uppercase; align-self: flex-start; margin-top: 4px;
+}
+.run-btn:hover { opacity: .82; }
+.run-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── OUTPUT ── */
+.out-block {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 3px;
+  padding: 14px; font-family: var(--dm); font-size: 11.5px; line-height: 1.8;
+  color: var(--text); white-space: pre-wrap; word-break: break-word;
+  flex: 1; min-height: 180px; position: relative;
+}
+.out-ph { color: var(--muted); font-style: italic; font-size: 12px; font-family: var(--sans); }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: var(--border); border: 1px solid var(--muted); color: var(--muted);
+  font-family: var(--cond); font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+  padding: 2px 8px; cursor: pointer; text-transform: uppercase; border-radius: 2px; transition: all .15s;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.spin {
+  display: inline-block; width: 11px; height: 11px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.bias-note {
+  background: rgba(255,183,48,.06); border: 1px solid rgba(255,183,48,.25);
+  border-left: 3px solid var(--warn); border-radius: 3px;
+  padding: 8px 11px; font-size: 11.5px; color: var(--text);
+}
+.err-note {
+  background: rgba(255,71,87,.06); border: 1px solid rgba(255,71,87,.25);
+  border-left: 3px solid var(--alert); border-radius: 3px; padding: 8px 11px; font-size: 12px;
+}
+.ok-note {
+  background: rgba(46,204,113,.06); border: 1px solid rgba(46,204,113,.25);
+  border-left: 3px solid var(--green); border-radius: 3px; padding: 8px 11px; font-size: 12px;
+}
+.ok-note a { color: var(--accent); }
+
+/* ── RIGHT PANEL ── */
+.rpanel { background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+.rp-sec { border-bottom: 1px solid var(--border); padding: 11px 13px; }
+.rp-lbl { font-family: var(--cond); font-size: 9px; font-weight: 700; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+.rp-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; border-bottom: 1px solid rgba(26,45,69,.6); font-size: 11px; }
+.rp-sta { font-family: var(--mono); color: var(--accent); font-size: 10.5px; width: 42px; flex-shrink: 0; }
+.rp-mid { flex: 1; padding: 0 6px; font-size: 10.5px; }
+.rp-val { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.rp-val.warn { color: var(--warn); }
+.rp-val.alert { color: var(--alert); }
+.zone-chip { display: inline-block; background: rgba(0,255,187,.07); border: 1px solid rgba(0,255,187,.18); border-radius: 2px; font-family: var(--mono); font-size: 9px; color: var(--accent2); padding: 1px 5px; margin: 2px; }
+.afd-txt { font-family: var(--mono); font-size: 9.5px; line-height: 1.6; color: var(--muted); max-height: 180px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+
+/* ── INFO BAR ── */
+.infobar { padding: 5px 18px; border-top: 1px solid var(--border); background: var(--surface); font-family: var(--mono); font-size: 9.5px; color: var(--muted); display: flex; gap: 20px; flex-wrap: wrap; flex-shrink: 0; }
+
+/* ── MODAL (API key setup) ── */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 100; display: flex; align-items: center; justify-content: center; }
+.modal-bg.hidden { display: none; }
+.modal {
+  background: var(--panel); border: 1px solid var(--border2); border-radius: 6px;
+  padding: 28px 32px; max-width: 480px; width: 90%;
+}
+.modal h2 { font-family: var(--cond); font-size: 20px; font-weight: 700; color: var(--bright); margin-bottom: 8px; }
+.modal p { font-size: 13px; line-height: 1.6; color: var(--text); margin-bottom: 14px; }
+.modal .fi { margin-bottom: 14px; font-family: var(--mono); }
+.modal-btns { display: flex; gap: 10px; }
+.modal-btns button { flex: 1; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 20px; right: 20px; z-index: 200;
+  background: var(--panel); border: 1px solid var(--border2); border-left: 3px solid var(--green);
+  padding: 10px 16px; border-radius: 3px; font-family: var(--mono); font-size: 12px;
+  color: var(--text); animation: toastIn .2s ease; max-width: 320px;
+}
+.toast a { color: var(--accent); text-decoration: none; }
+.toast.err { border-left-color: var(--alert); }
+@keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+@media (max-width: 1050px) { .main { grid-template-columns: 185px 1fr; } .rpanel { display: none; } }
+@media (max-width: 700px)  { .main { grid-template-columns: 1fr; } .sidebar { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- API KEY MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h2>Enter Anthropic API Key</h2>
+    <p>Your key is used only in this browser tab to call the Claude API directly. It is never sent anywhere else and is not stored between sessions.</p>
+    <p>Get a key at <strong>console.anthropic.com</strong> → API Keys.</p>
+    <input class="fi" type="password" id="modal-key" placeholder="sk-ant-api03-..." autocomplete="off">
+    <div class="modal-btns">
+      <button class="hdr-btn btn-accent" onclick="saveKey()">Save &amp; Continue</button>
+      <button class="hdr-btn" style="border-color:var(--border2);color:var(--muted)" onclick="dismissModal()">Skip (Demo)</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-pill">NOAA / NWS</div>
+    <div class="logo-name">WFO <em>BOX</em> — AI Forecast Assist <span style="color:var(--muted);font-weight:400;font-size:12px"> LIVE</span></div>
+  </div>
+  <div class="header-right">
+    <div class="api-key-row">
+      <span style="font-family:var(--cond);font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase">API Key</span>
+      <input class="api-key-input" type="password" id="api-key-display" placeholder="sk-ant-... (paste here)" autocomplete="off" oninput="onKeyInput()">
+    </div>
+    <button class="hdr-btn btn-green" onclick="fetchAllLive()" id="refresh-btn">⟳ Refresh Live Data</button>
+    <span id="live-status" style="font-family:var(--mono);font-size:10px;color:var(--muted)"><span class="dot dot-warn"></span>Not loaded</span>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<!-- METAR STRIP -->
+<div class="metar-strip" id="metar-strip">
+  <div style="font-family:var(--mono);font-size:10px;color:var(--muted);align-self:center;padding:4px 0">
+    Click "Refresh Live Data" to load current METARs →
+  </div>
+</div>
+
+<!-- ALERT BAR -->
+<div class="alert-bar" id="alert-bar"></div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-grp">
+      <div class="sb-lbl">AFD</div>
+      <button class="sb-btn active" onclick="loadTask('afd')">Synopsis + Discussion</button>
+      <button class="sb-btn" onclick="loadTask('afd_avn')">Aviation + Marine Sections</button>
+    </div>
+    <div class="sb-grp">
+      <div class="sb-lbl">TAF</div>
+      <button class="sb-btn" onclick="loadTask('taf')">TAF Generation</button>
+      <button class="sb-btn" onclick="loadTask('taf_amend')">Amendment Decision</button>
+      <button class="sb-btn" onclick="loadTask('taf_check')">Multi-Station Check</button>
+    </div>
+    <div class="sb-grp">
+      <div class="sb-lbl">Marine CWF</div>
+      <button class="sb-btn" onclick="loadTask('cwf')">Zone Forecast Draft</button>
+    </div>
+    <div class="sb-grp">
+      <div class="sb-lbl">WWA / Winter</div>
+      <button class="sb-btn" onclick="loadTask('wwa_wsw')">Winter Storm Warning</button>
+      <button class="sb-btn" onclick="loadTask('wwa_fzra')">FZRA / Ice Storm</button>
+      <button class="sb-btn" onclick="loadTask('wwa_cfl')">Coastal Flood</button>
+    </div>
+    <div class="sb-grp">
+      <div class="sb-lbl">Consistency</div>
+      <button class="sb-btn" onclick="loadTask('xcheck')">Cross-Product Check</button>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <div class="task-bar">
+      <div class="task-name" id="task-name">AFD Synopsis + Discussion</div>
+      <div class="bar-btns">
+        <button class="hdr-btn btn-green" onclick="autoFill()">⟳ Auto-Fill Live Data</button>
+        <button class="hdr-btn" style="border-color:rgba(0,212,255,.3);color:var(--accent);background:rgba(0,212,255,.07)" onclick="fetchModelData()" id="model-load-btn">📡 Load Model Guidance</button>
+        <button class="hdr-btn btn-accent" id="save-drive-btn" style="display:none" onclick="saveToDrive()">⬆ Drive</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <!-- INPUT PANE -->
+      <div class="pane pane-in">
+        <div class="pane-head">
+          <span class="pane-lbl">Input</span>
+          <span id="autofill-status" style="font-family:var(--mono);font-size:9px;color:var(--muted)"></span>
+        </div>
+        <div class="pane-body" id="form-body">
+          <!-- Fields injected by JS -->
+        </div>
+      </div>
+
+      <!-- OUTPUT PANE -->
+      <div class="pane pane-out">
+        <div class="pane-head">
+          <span class="pane-lbl">AI Output — Review Before Use</span>
+        </div>
+        <div class="pane-body">
+          <div class="out-block" id="out-block">
+<span class="out-ph">AFD output will appear here.<br><br>1. Click <strong style="color:var(--accent2)">⟳ Refresh Live Data</strong> — loads METARs, current AFD, alerts<br>2. Click <strong style="color:var(--accent)">📡 Load Model Guidance</strong> — loads NDFD grids, MOS, soundings<br>3. Add any forecaster notes, then click <strong style="color:var(--accent)">▶ Run AI Assist</strong><br><br>The AFD is written entirely from NDFD + MOS + obs data.</span>
+          </div>
+          <div id="bias-display"></div>
+          <div id="drive-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="rpanel">
+    <div class="rp-sec" style="display:flex;align-items:center;justify-content:space-between;padding-bottom:11px">
+      <div class="rp-lbl" style="margin:0">Live Obs</div>
+      <span id="rp-updated" style="font-family:var(--mono);font-size:9px;color:var(--muted)">—</span>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-lbl">BOX TAF Stations</div>
+      <div id="rp-metars"><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">Not loaded</div></div>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-lbl">Active Alerts</div>
+      <div id="rp-alerts" style="font-size:10.5px;color:var(--muted);font-family:var(--mono)">—</div>
+    </div>
+    <div class="rp-sec" style="padding-bottom:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px">
+        <div class="rp-lbl" style="margin:0">Model Guidance</div>
+        <button class="rp-fetch-btn" id="model-fetch-btn" onclick="fetchModelData()">⟳ Load NDFD + MOS</button>
+      </div>
+      <div class="model-tab-bar">
+        <button class="mtab active" onclick="showMTab('ndfd')">NDFD</button>
+        <button class="mtab" onclick="showMTab('prob')">Probabilities</button>
+        <button class="mtab" onclick="showMTab('mos')">MOS</button>
+        <button class="mtab" onclick="showMTab('snd')">Soundings</button>
+      </div>
+      <div class="model-panel active" id="mp-ndfd"><div class="model-loading">Click "Load NDFD + MOS" →</div></div>
+      <div class="model-panel" id="mp-prob"><div class="model-loading">Probabilities load with NDFD →</div></div>
+      <div class="model-panel" id="mp-mos"><div class="model-loading">MOS loads with NDFD →</div></div>
+      <div class="model-panel" id="mp-snd"><div class="model-loading">Soundings load with NDFD →</div></div>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-lbl">Marine Zones (13)</div>
+      <div>
+        <span class="zone-chip">ANZ230</span><span class="zone-chip">ANZ231</span><span class="zone-chip">ANZ232</span>
+        <span class="zone-chip">ANZ233</span><span class="zone-chip">ANZ234</span><span class="zone-chip">ANZ235</span>
+        <span class="zone-chip">ANZ236</span><span class="zone-chip">ANZ237</span><span class="zone-chip">ANZ238</span>
+        <span class="zone-chip">ANZ239</span><span class="zone-chip">ANZ250</span><span class="zone-chip">ANZ251</span>
+        <span class="zone-chip">ANZ252</span>
+      </div>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-lbl">Latest AFD</div>
+      <div class="afd-txt" id="rp-afd">Not loaded</div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="infobar">
+  <span>BOX TAF: KBOS KORH KPVD KBDL KACK KHYA KMVY KOWD KFIT KEEN</span>
+  <span>DATA: api.weather.gov (public, no auth)</span>
+  <span>AI: claude-sonnet-4-20250514 (your API key)</span>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const NWS = 'https://api.weather.gov';
+const STATIONS = ['KBOS','KORH','KPVD','KBDL','KACK','KHYA','KMVY','KOWD','KFIT','KEEN'];
+const STATION_NAMES = {KBOS:'Boston Logan',KORH:'Worcester',KPVD:'Providence',KBDL:'Windsor Locks',KACK:'Nantucket',KHYA:'Hyannis',KMVY:"Martha's Vineyard",KOWD:'Norwood',KFIT:'Fitchburg',KEEN:'Keene NH'};
+
+const BOX_SYSTEM = `You are an AI forecast assistant for NWS Weather Forecast Office Boston (WFO BOX), helping operational meteorologists draft and quality-check forecast products including AFDs, TAFs, marine CWFs, and WWA decisions.
+
+CRITICAL BOX-SPECIFIC BIAS CORRECTIONS — ALWAYS APPLY:
+
+1. BANDED SNOW UNDERFORECASTING
+   Model QPF underpredicts snowfall 2-4" in banded events along Rte 495/interior SNE. Deep dendritic zone (-12 to -18C) = adjust totals upward and communicate uncertainty.
+
+2. RAIN/SNOW LINE (I-95 / CAPE COD)
+   Coastal areas run 3-5F warmer than model guidance at precip onset. Rain/snow line often 20-40 miles north of model output. Hedge along I-95, Rte 128, Rte 6. Do not commit to snow south of Route 6.
+
+3. CAPE/ISLANDS NW GUST UNDERFORECAST
+   GFS/NAM underforecast NW gusts at KACK/KMVY by 5-10 kt in post-frontal cold advection. Apply to TAFs, marine CWF, public forecasts for Barnstable, Dukes, Nantucket.
+
+4. COASTAL TEMPERATURE MODERATION
+   Coastal obs run 3-5F above model-predicted values. Adjust Boston metro, Cape Cod, and coastal zone forecasts.
+
+5. MARINE SEA HEIGHT UNDERFORECAST
+   WaveWatch III/ECMWF underestimate SWH 1-3 ft during rapid deepening (>24 mb/24hr). Add 2-3 ft to model output for offshore ANZ zones.
+
+6. FZRA TO SLEET COLD LAYER THRESHOLD (BOX-specific)
+   Sub-freezing layer <2000 ft = primarily FZRA | 2000-2500 ft = FZRA/sleet mix | >2500 ft = primarily sleet
+
+BOX TAF STATIONS (10): KBOS KORH KPVD KBDL KACK KHYA KMVY KOWD KFIT KEEN
+MARINE ZONES (13): ANZ230-239, ANZ250-252
+
+FORMAT: Use NWS product formatting. Flag bias corrections with NOTE: lines. Confidence: HIGH/MEDIUM/LOW. End text blocks with &&. Never fabricate obs or model data.`;
+
+// ─── TASK DEFINITIONS ────────────────────────────────────────────────────────
+const TASKS = {
+  afd: {
+    name: 'AFD — Full Draft from Model Data',
+    fields: [
+      {id:'sections', label:'Sections to Draft', type:'sel', opts:['Synopsis + Short Term + Long Term','Synopsis + Short Term only','Full AFD (all sections)']},
+      {id:'forecaster_notes', label:'Forecaster Notes / Overrides', type:'ta',
+        ph:'Any manual overrides or local knowledge — e.g. "confidence low on timing", "expecting banding near 495", custom precip type call...'},
+      {id:'extra_guidance', label:'Additional Guidance (optional)', type:'ta',
+        ph:'Paste extra AWIPS data, ensemble spreads, sounding text not already loaded in model panel...'},
+    ],
+    prompt: (f,live) => buildAFDPrompt(f, live),
+  },
+
+  afd_avn: {
+    name: 'AFD Aviation + Marine (Model-Driven)',
+    fields: [
+      {id:'avn_notes',    label:'Aviation Notes / Overrides', type:'ta', ph:'Specific ceiling/vis concerns, amendment thresholds, FZRA risk, IFR timing...'},
+      {id:'marine_notes', label:'Marine Notes / Overrides',   type:'ta', ph:'Buoy obs, deepening rate, zone-specific concerns, SCA/gale criteria...'},
+    ],
+    prompt: (f,live) => buildAvnMarinePrompt(f, live),
+  },
+
+  taf: {
+    name: 'TAF Generation',
+    fields: [
+      {id:'station', label:'Station', type:'sel', opts:STATIONS},
+      {id:'hours',   label:'TAF Length', type:'sel', opts:['24','30']},
+      {id:'metar',   label:'Current METAR', type:'ta', ph:'Auto-filled on station select →', auto:'metar'},
+      {id:'model',   label:'Model / MOS Guidance', type:'ta', ph:'Wind, ceiling, vis evolution by period...'},
+      {id:'concerns',label:'Key Concerns', type:'ta', ph:'Frontal timing, FZRA, fog, sea breeze, convection...'},
+    ],
+    prompt: (f,live) => `TASK: Generate a ${f.hours}-hour TAF for ${f.station} (${STATION_NAMES[f.station]||''}).
+CURRENT METAR: ${f.metar}
+MODEL GUIDANCE: ${f.model}
+KEY CONCERNS: ${f.concerns}
+OUTPUT: TAF in NWS standard format. TEMPO/PROB groups with rationale. Flag BOX bias corrections applied.`
+  },
+
+  taf_amend: {
+    name: 'TAF Amendment Decision',
+    fields: [
+      {id:'station',  label:'Station', type:'sel', opts:STATIONS},
+      {id:'cur_taf',  label:'Current TAF', type:'ta', ph:'Paste current TAF...'},
+      {id:'metar',    label:'Latest METAR', type:'ta', ph:'Auto-filled →', auto:'metar'},
+      {id:'trend',    label:'Trend / Situation', type:'ta', ph:'Describe what conditions are doing and what is changing...'},
+    ],
+    prompt: (f) => `TASK: Evaluate whether to amend the TAF for ${f.station}.
+CURRENT TAF: ${f.cur_taf}
+LATEST METAR: ${f.metar}
+TREND: ${f.trend}
+OUTPUT: Amendment recommendation — ROUTINE or URGENT. Draft amendment text if warranted. Reason for decision.`
+  },
+
+  taf_check: {
+    name: 'Multi-Station TAF Check',
+    fields: [
+      {id:'event', label:'Event', ph:'Brief description'},
+      {id:'tafs',  label:'Paste TAFs (KBOS, KORH, KPVD + others)', type:'ta', ph:'Paste all relevant TAFs...'},
+    ],
+    prompt: (f) => `TASK: Cross-check consistency across the following BOX TAFs.
+EVENT: ${f.event}
+TAFS:
+${f.tafs}
+OUTPUT: Flag timing or precip-type inconsistencies across stations. Suggest corrections. Note which stations have greatest uncertainty.`
+  },
+
+  cwf: {
+    name: 'Marine CWF Draft',
+    fields: [
+      {id:'zones',        label:'Zones', ph:'e.g., ANZ230, ANZ231, ANZ250 — or ALL'},
+      {id:'valid_period', label:'Valid Period', ph:'e.g., Tonight through Thursday'},
+      {id:'model_winds',  label:'Model Wind Guidance', type:'ta', ph:'GFS/NAM marine output — direction, speed, gusts by period...'},
+      {id:'model_seas',   label:'Model Sea Heights (ft)', ph:'e.g., 8-12 ft'},
+      {id:'deepen_rate',  label:'Deepening Rate (mb/24hr)', ph:'Leave blank if N/A'},
+      {id:'buoy_obs',     label:'Buoy / C-MAN Obs', type:'ta', ph:'Latest buoy observations if available...'},
+    ],
+    prompt: (f,live) => `TASK: Draft marine forecast language.
+ZONES: ${f.zones}
+VALID PERIOD: ${f.valid_period}
+MODEL WINDS: ${f.model_winds}
+MODEL SEAS: ${f.model_seas} ft
+DEEPENING RATE: ${f.deepen_rate||'N/A'} mb/24hr
+BUOY OBS: ${f.buoy_obs||'Not provided'}
+CURRENT CWF (context): ${live.cwf ? live.cwf.substring(0,800) : 'Not available'}
+ACTIVE MARINE ALERTS: ${live.alertSummary||'None'}
+OUTPUT: Operational CWF language per zone. Apply sea height bias if deepening >20 mb/24hr. Apply Cape/Islands NW gust bias if NW flow. Flag watch/warning criteria if met.`
+  },
+
+  wwa_wsw: {
+    name: 'Winter Storm Warning',
+    fields: [
+      {id:'event',    label:'Event', ph:'e.g., Nor\'easter, 48-hr snow event'},
+      {id:'qpf',      label:'QPF by Zone/County', type:'ta', ph:'Worcester Co: 8-14"\nMiddlesex: 4-8"\nSuffolk: 2-5" mix\n...'},
+      {id:'timing',   label:'Event Timing', ph:'e.g., 10 PM Tue through 8 PM Wed'},
+      {id:'thermals', label:'Thermal Profiles', type:'ta', ph:'850mb temps, all-snow vs mix zones, sounding notes...', auto:'sounding'},
+      {id:'conf',     label:'Confidence', type:'sel', opts:['HIGH','MEDIUM','LOW']},
+    ],
+    prompt: (f,live) => `TASK: Evaluate Winter Storm Warning issuance.
+EVENT: ${f.event}
+QPF BY ZONE:
+${f.qpf}
+TIMING: ${f.timing}
+THERMAL PROFILES: ${f.thermals}
+CONFIDENCE: ${f.conf}
+LATEST BOX AFD: ${live.afd ? live.afd.substring(0,800) : 'Not available'}
+ACTIVE ALERTS ALREADY IN EFFECT: ${live.alertSummary||'None'}
+OUTPUT: WSW recommendation per zone (Issue WSW / Watch / Advisory / No Headline). Rationale. Flag borderline zones. Apply BOX banding and rain/snow line biases.`
+  },
+
+  wwa_fzra: {
+    name: 'FZRA / Ice Storm Decision',
+    fields: [
+      {id:'nose_depth', label:'Warm Nose Depth (ft)',        ph:'e.g., 3800'},
+      {id:'nose_temp',  label:'Warm Nose Peak Temp (°C)',    ph:'e.g., +4.2'},
+      {id:'cold_layer', label:'Sub-Freezing Layer Depth (ft)', ph:'e.g., 2100 — KEY for BOX threshold'},
+      {id:'sfc_temp',   label:'Surface Temp (°F)',           ph:'e.g., 29'},
+      {id:'ice_acc',    label:'Expected Ice Accretion (in)', ph:'e.g., 0.10–0.25'},
+      {id:'zones',      label:'Zones Affected',              ph:'e.g., MAZ002, MAZ003'},
+    ],
+    prompt: (f) => `TASK: Evaluate FZRA / Ice Storm Warning decision.
+WARM NOSE: ${f.nose_depth} ft depth | Peak ${f.nose_temp}°C
+SUB-FREEZING LAYER: ${f.cold_layer} ft — Apply BOX threshold: <2000ft=FZRA | 2000-2500ft=mix | >2500ft=sleet
+SURFACE TEMP: ${f.sfc_temp}°F
+ICE ACCRETION: ${f.ice_acc} in
+ZONES: ${f.zones}
+OUTPUT: ISW vs WWA recommendation with rationale. Apply BOX cold layer threshold. Draft AFD FZRA precip type discussion language.`
+  },
+
+  wwa_cfl: {
+    name: 'Coastal Flood Advisory/Warning',
+    fields: [
+      {id:'gauge',     label:'Tide Gauge Station',          ph:'e.g., Boston Harbor, Chatham, Woods Hole'},
+      {id:'astro',     label:'Astro High Tide (ft MLLW)',   ph:'e.g., 5.8'},
+      {id:'surge',     label:'Surge Forecast — ETSS (ft)',  ph:'e.g., 0.8–1.2'},
+      {id:'total_wl',  label:'Total Water Level (ft MLLW)', ph:'Astro + surge = _____ ft'},
+      {id:'flood_stg', label:'Flood Stage (ft MLLW)',       ph:'Advisory: ___ ft  Warning: ___ ft'},
+      {id:'wind',      label:'Wind at High Tide',           ph:'Direction and speed'},
+      {id:'zones',     label:'Zones Affected',              ph:'e.g., ANZ230, Barnstable Co. coast'},
+    ],
+    prompt: (f) => `TASK: Evaluate coastal flood headline issuance.
+TIDE GAUGE: ${f.gauge}
+ASTRO HIGH TIDE: ${f.astro} ft MLLW
+SURGE: ${f.surge} ft (ETSS)
+TOTAL WATER LEVEL: ${f.total_wl} ft MLLW
+FLOOD STAGE: ${f.flood_stg} ft MLLW
+WIND: ${f.wind}
+ZONES: ${f.zones}
+OUTPUT: CFA vs CFW recommendation. Draft CFA/CFW headline and impacts text in NWS format.`
+  },
+
+  xcheck: {
+    name: 'Cross-Product Consistency',
+    fields: [
+      {id:'event',  label:'Event', ph:'Brief description'},
+      {id:'afd',    label:'AFD Synopsis/Short Term', type:'ta', ph:'Auto-filled →', auto:'afd'},
+      {id:'tafs',   label:'TAF(s)',    type:'ta', ph:'Paste KBOS, KORH, KPVD TAFs...'},
+      {id:'cwf',    label:'Marine CWF', type:'ta', ph:'Paste or summarize marine language...'},
+      {id:'wwas',   label:'Active WWA Headlines', type:'ta', ph:'Auto-filled →', auto:'alerts'},
+    ],
+    prompt: (f) => `TASK: Cross-product consistency check.
+EVENT: ${f.event}
+AFD: ${f.afd}
+TAFs: ${f.tafs}
+MARINE CWF: ${f.cwf}
+WWA HEADLINES: ${f.wwas}
+OUTPUT: List all inconsistencies (timing, precip type, wind speeds, totals). Flag HIGH/MEDIUM/LOW priority. Draft corrected language for all HIGH priority issues.`
+  },
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let currentTask = 'afd';
+let liveData = {
+  metars:{}, afd:'', alerts:[], alertSummary:'', cwf:'', loaded:false,
+  ndfd:{},        // NDFD grids per location
+  ndfdProb:{},    // NDFD probabilistic QPF/PoP
+  mos:{},         // MOS MAV/MEX per station
+  soundings:{},   // RUC soundings per station
+  modelSummary:'',// formatted guidance block for auto-fill
+  modelLoaded:false
+};
+let lastOutput = '';
+let lastTaskName = '';
+let apiKey = '';
+
+// ─── CLOCK ───────────────────────────────────────────────────────────────────
+function tick() {
+  const n=new Date(), h=String(n.getUTCHours()).padStart(2,'0'), m=String(n.getUTCMinutes()).padStart(2,'0'), s=String(n.getUTCSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = h+':'+m+':'+s+' UTC';
+}
+setInterval(tick,1000); tick();
+
+// ─── API KEY ─────────────────────────────────────────────────────────────────
+function onKeyInput() {
+  apiKey = document.getElementById('api-key-display').value.trim();
+}
+function saveKey() {
+  apiKey = document.getElementById('modal-key').value.trim();
+  document.getElementById('api-key-display').value = apiKey;
+  document.getElementById('modal-bg').classList.add('hidden');
+}
+function dismissModal() {
+  document.getElementById('modal-bg').classList.add('hidden');
+}
+
+// ─── NWS API FETCH ───────────────────────────────────────────────────────────
+async function nwsGet(url) {
+  const r = await fetch(url, { headers:{'User-Agent':'WFO-BOX-ForecastAssist/3 (browser)'} });
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+async function fetchMetar(sta) {
+  try {
+    const d = await nwsGet(`${NWS}/stations/${sta}/observations/latest`);
+    const p = d.properties;
+    const tc = p.temperature?.value;
+    const dc = p.dewpoint?.value;
+    const ws = p.windSpeed?.value;
+    const wg = p.windGust?.value;
+    const wd = p.windDirection?.value;
+    const vi = p.visibility?.value;
+    const sky = p.cloudLayers || [];
+    const wx  = (p.presentWeather||[]).map(w=>w.rawString).filter(Boolean).join(' ');
+    const tf  = tc!=null ? Math.round(tc*9/5+32) : '?';
+    const df  = dc!=null ? Math.round(dc*9/5+32) : '?';
+    const wdir = wd!=null ? String(Math.round(wd)).padStart(3,'0') : 'VRB';
+    const wspd = ws!=null ? Math.round(ws*1.94384) : 0;
+    const wgst = wg!=null ? Math.round(wg*1.94384) : 0;
+    const vsm  = vi!=null ? Math.round(vi/160934)/10 : '?';
+    const skyStr = sky.map(l=>{ const b=l.base?.value; return b!=null?`${l.amount}${String(Math.round(b*3.28084/100)).padStart(3,'0')}`:''; }).filter(Boolean).join(' ') || 'SKC';
+    const windStr = `${wdir}/${wspd}KT${wgst?'G'+wgst+'KT':''}`;
+    return {
+      raw: p.rawMessage||'',
+      sta, tf, df, wx, windStr, wspd, wgst, vsm, skyStr,
+      summary:`${sta}: ${tf}°F/${df}°F  Wind:${windStr}  Vis:${vsm}SM  Sky:${skyStr}${wx?' Wx:'+wx:''}  [${(p.timestamp||'').substring(0,16).replace('T',' ')} UTC]`
+    };
+  } catch(e) { return {sta, tf:'?', df:'?', wx:'', windStr:'VRB/??', wspd:0, wgst:0, vsm:'?', skyStr:'', summary:`${sta}: fetch error`, raw:''}; }
+}
+
+async function fetchAFD() {
+  try {
+    const list = await nwsGet(`${NWS}/products/types/AFD/locations/BOX`);
+    if(!list['@graph']?.length) return '';
+    const prod = await nwsGet(list['@graph'][0]['@id'] || list['@graph'][0].id);
+    return prod.productText || '';
+  } catch(e) { return ''; }
+}
+
+async function fetchCWF() {
+  try {
+    const list = await nwsGet(`${NWS}/products/types/CWF/locations/BOX`);
+    if(!list['@graph']?.length) return '';
+    const prod = await nwsGet(list['@graph'][0]['@id'] || list['@graph'][0].id);
+    return prod.productText || '';
+  } catch(e) { return ''; }
+}
+
+async function fetchAlerts() {
+  const results = [];
+  for(const state of ['MA','RI','CT']) {
+    try {
+      const d = await nwsGet(`${NWS}/alerts/active?area=${state}&status=actual`);
+      for(const f of d.features||[]) {
+        const p = f.properties;
+        results.push({event:p.event||'', headline:p.headline||'', areas:p.areaDesc||'', onset:p.onset||'', expires:p.expires||'', severity:p.severity||''});
+      }
+    } catch(e) {}
+  }
+  // Dedupe by headline
+  const seen = new Set();
+  return results.filter(a => { const k = a.event+a.areas; if(seen.has(k)) return false; seen.add(k); return true; });
+}
+
+async function fetchAllLive() {
+  const btn = document.getElementById('refresh-btn');
+  btn.textContent = '⟳ Loading...'; btn.disabled = true;
+  document.getElementById('live-status').innerHTML = '<span class="dot dot-warn"></span>Fetching...';
+  setMetarStrip('loading');
+
+  // Fetch in parallel
+  const [metarResults, afd, cwf, alerts] = await Promise.all([
+    Promise.all(STATIONS.map(fetchMetar)),
+    fetchAFD(),
+    fetchCWF(),
+    fetchAlerts(),
+  ]);
+
+  liveData.metars = {};
+  metarResults.forEach(m => { liveData.metars[m.sta] = m; });
+  liveData.afd = afd;
+  liveData.cwf = cwf;
+  liveData.alerts = alerts;
+  liveData.alertSummary = alerts.length ? alerts.map(a=>`${a.event}: ${a.areas}`).join(' | ') : 'None';
+  liveData.loaded = true;
+  liveData.fetchedAt = new Date().toUTCString();
+
+  renderMetarStrip();
+  renderAlertBar();
+  renderRightPanel();
+
+  const n = Object.values(liveData.metars).filter(m=>m.raw).length;
+  document.getElementById('live-status').innerHTML = `<span class="dot dot-pulse"></span>${n}/10 stations • ${new Date().toUTCString().slice(17,22)}Z`;
+  document.getElementById('rp-updated').textContent = new Date().toUTCString().slice(17,22)+'Z';
+  btn.textContent = '⟳ Refresh Live Data'; btn.disabled = false;
+
+  showToast(`Live data loaded — ${n}/10 METARs, ${alerts.length} alert(s)`, false);
+}
+
+function setMetarStrip(state) {
+  if(state === 'loading') {
+    document.getElementById('metar-strip').innerHTML = STATIONS.map(s=>`<div class="mcell loading"><span class="m-sta">${s}</span><span class="m-tmp">loading...</span></div>`).join('');
+  }
+}
+
+function renderMetarStrip() {
+  const html = STATIONS.map(sta => {
+    const m = liveData.metars[sta];
+    if(!m) return `<div class="mcell"><span class="m-sta">${sta}</span><span class="m-tmp">—</span></div>`;
+    const badWx = m.wx && /TS|SN|FZ|PL|IP|RA/.test(m.wx);
+    const highWind = m.wgst >= 25 || m.wspd >= 20;
+    return `<div class="mcell" onclick="injectMetar('${sta}')" title="Click to inject METAR\n${m.raw}">
+      <span class="m-sta">${sta}</span>
+      <span class="m-tmp">${m.tf}°F</span>
+      <span class="m-wnd ${highWind?'alert':''}">${m.windStr}</span>
+      ${badWx?`<span class="m-wx">${m.wx}</span>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('metar-strip').innerHTML = html;
+}
+
+function renderAlertBar() {
+  const bar = document.getElementById('alert-bar');
+  if(!liveData.alerts.length) { bar.classList.remove('active'); return; }
+  bar.classList.add('active');
+  bar.innerHTML = liveData.alerts.slice(0,10).map(a => {
+    const sev = /Extreme|Severe/.test(a.severity);
+    return `<div class="alert-pill ${sev?'sev':''}" title="${a.headline}">${a.event}</div>`;
+  }).join('');
+}
+
+function renderRightPanel() {
+  // Metars
+  document.getElementById('rp-metars').innerHTML = STATIONS.map(sta => {
+    const m = liveData.metars[sta] || {};
+    const cls = m.wgst>=30?'alert':m.wgst>=20?'warn':'';
+    return `<div class="rp-row">
+      <span class="rp-sta">${sta}</span>
+      <span class="rp-mid">${m.tf||'?'}°F / ${m.df||'?'}°F</span>
+      <span class="rp-val ${cls}">${(m.windStr||'—').split('/')[1]||'—'}</span>
+    </div>`;
+  }).join('');
+
+  // Alerts
+  document.getElementById('rp-alerts').innerHTML = liveData.alerts.length
+    ? liveData.alerts.slice(0,5).map(a=>`<div style="padding:3px 0;border-bottom:1px solid rgba(26,45,69,.6);color:var(--warn)">${a.event}<br><span style="color:var(--muted);font-size:9px">${a.areas.substring(0,55)}</span></div>`).join('')
+    : '<span>No active alerts</span>';
+
+  // AFD
+  const afd = liveData.afd;
+  const idx = afd.indexOf('.SYNOPSIS');
+  document.getElementById('rp-afd').textContent = afd
+    ? afd.substring(idx > -1 ? idx : 0, 700) + '\n...'
+    : 'Not loaded';
+}
+
+function injectMetar(sta) {
+  const m = liveData.metars[sta];
+  if(!m) return;
+  const el = document.getElementById('f_metar') || document.getElementById('f_metar') || document.querySelector('textarea[data-auto="metar"]');
+  if(el) { el.value = m.raw || m.summary; el.classList.add('autofilled'); }
+  showToast(`${sta} METAR injected`, false);
+}
+
+// ─── TASK RENDERING ──────────────────────────────────────────────────────────
+function loadTask(id) {
+  currentTask = id;
+  const task = TASKS[id];
+  document.getElementById('task-name').textContent = task.name;
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === task.name));
+
+  const body = document.getElementById('form-body');
+  body.innerHTML = task.fields.map(f => {
+    const isAuto = !!f.auto;
+    let input = '';
+    if(f.type === 'ta') {
+      input = `<textarea class="fi${isAuto?' autofilled':''}" id="f_${f.id}" data-auto="${f.auto||''}" rows="4" placeholder="${f.ph||''}"></textarea>`;
+    } else if(f.type === 'sel') {
+      input = `<select class="fi" id="f_${f.id}">${f.opts.map(o=>`<option>${o}</option>`).join('')}</select>`;
+    } else {
+      input = `<input type="text" class="fi" id="f_${f.id}" placeholder="${f.ph||''}">`;
+    }
+    return `<div class="field">
+      <label class="field-lbl">${f.label}${isAuto?'<span class="auto-tag">auto</span>':''}</label>
+      ${input}
+    </div>`;
+  }).join('');
+
+  // Watch station select for TAF tasks
+  const staSel = document.getElementById('f_station');
+  if(staSel) staSel.addEventListener('change', () => {
+    const m = liveData.metars[staSel.value];
+    const el = document.getElementById('f_metar');
+    if(el && m) { el.value = m.raw || m.summary; el.classList.add('autofilled'); }
+  });
+
+  // Add run button
+  body.insertAdjacentHTML('beforeend', `
+    <button class="run-btn" id="run-btn" onclick="runTask()">▶ Run AI Assist</button>
+    <div id="run-status"></div>
+  `);
+
+  // Clear output
+  document.getElementById('out-block').innerHTML = '<span class="out-ph">Output will appear here.</span>';
+  document.getElementById('bias-display').innerHTML = '';
+  document.getElementById('drive-result').innerHTML = '';
+  document.getElementById('save-drive-btn').style.display = 'none';
+  lastOutput = '';
+}
+
+// ─── AUTO-FILL ───────────────────────────────────────────────────────────────
+function autoFill() {
+  if(!liveData.loaded) { showToast('Click "Refresh Live Data" first', true); return; }
+  let filled = 0;
+  const task = TASKS[currentTask];
+
+  task.fields.forEach(f => {
+    const el = document.getElementById('f_'+f.id);
+    if(!el || !f.auto) return;
+
+    if(f.auto === 'metars') {
+      el.value = Object.values(liveData.metars).map(m=>m.summary).join('\n');
+      el.classList.add('autofilled'); filled++;
+    } else if(f.auto === 'metar') {
+      const sta = (document.getElementById('f_station')||{}).value || 'KBOS';
+      const m = liveData.metars[sta];
+      if(m) { el.value = m.raw || m.summary; el.classList.add('autofilled'); filled++; }
+    } else if(f.auto === 'afd') {
+      if(liveData.afd) { el.value = liveData.afd.substring(0,1200); el.classList.add('autofilled'); filled++; }
+    } else if(f.auto === 'alerts') {
+      el.value = liveData.alerts.length
+        ? liveData.alerts.map(a=>`${a.event}: ${a.areas}\nOnset: ${a.onset} | Expires: ${a.expires}`).join('\n\n')
+        : 'No active alerts';
+      el.classList.add('autofilled'); filled++;
+    } else if(f.auto === 'model') {
+      if(liveData.modelLoaded && liveData.modelSummary) {
+        el.value = liveData.modelSummary;
+        el.classList.add('autofilled'); filled++;
+      } else {
+        el.placeholder = 'Click "📡 Load Model Guidance" first, then Auto-Fill — or paste from AWIPS/Pivotal...';
+        showToast('Click "📡 Load Model Guidance" first to auto-fill model fields', true);
+      }
+    }
+  });
+
+  // For AFD task, show scenario detection
+  if(currentTask === 'afd' || currentTask === 'afd_avn') {
+    updateScenarioBanner();
+    if(!liveData.modelLoaded) {
+      showToast('Load model data first: click "📡 Load Model Guidance" → then Run to generate AFD from NDFD', true);
+      return;
+    }
+    document.getElementById('autofill-status').textContent = `✓ NDFD loaded — click Run to generate AFD`;
+    showToast('Model data ready — click ▶ Run AI Assist to generate AFD from NDFD data', false);
+    return;
+  }
+
+  document.getElementById('autofill-status').textContent = filled ? `${filled} field(s) filled` : '';
+  if(filled) showToast(`Auto-filled ${filled} field(s) from live NWS data`, false);
+  else showToast('Add model guidance manually — no auto-source available for that field', false);
+}
+
+function updateScenarioBanner() {
+  if(!liveData.modelLoaded) return;
+  const s = detectScenario(liveData);
+  const colors = {winter_storm:'var(--alert)',heavy_rain:'var(--accent)',wind:'var(--warn)',convective:'var(--warn)',quiet:'var(--green)',routine:'var(--muted)',unknown:'var(--muted)'};
+  const color = colors[s.type] || 'var(--muted)';
+  const statusEl = document.getElementById('autofill-status');
+  if(statusEl) statusEl.innerHTML = `<span style="color:${color};font-family:var(--cond);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em">${s.type.replace('_',' ')} · ${s.confidence} confidence</span> <span style="color:var(--muted)">${s.hazards.join(' | ')}</span>`;
+}
+
+// ─── RUN TASK ────────────────────────────────────────────────────────────────
+async function runTask() {
+  const key = (document.getElementById('api-key-display').value || apiKey || '').trim();
+  if(!key || !key.startsWith('sk-')) {
+    document.getElementById('modal-key').value = '';
+    document.getElementById('modal-bg').classList.remove('hidden');
+    return;
+  }
+  apiKey = key;
+
+  const task = TASKS[currentTask];
+  const f = {};
+  task.fields.forEach(field => {
+    const el = document.getElementById('f_'+field.id);
+    f[field.id] = el ? el.value.trim() : '';
+  });
+
+  const promptText = task.prompt(f, liveData);
+
+  // Detect biases
+  const pl = promptText.toLowerCase();
+  const biases = [];
+  if(/band|nor.easter|qpf|snow/.test(pl)) biases.push('Banded Snow (+2–4")');
+  if(/i-95|rain.snow|cape cod/.test(pl))  biases.push('Rain/Snow Line');
+  if(/nw|northwest|kack|kmvy|nantucket|vineyard/.test(pl)) biases.push('Cape/Islands NW Gust');
+  if(/deepening|wave|swh|sea height/.test(pl)) biases.push('Marine Sea Height');
+  if(/fzra|freezing rain|ice storm|cold layer/.test(pl)) biases.push('FZRA→Sleet Threshold');
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true; btn.textContent = 'Generating...';
+  document.getElementById('out-block').innerHTML = '<span class="out-ph"><span class="spin"></span>Drafting forecast text...</span>';
+  document.getElementById('bias-display').innerHTML = '';
+  document.getElementById('drive-result').innerHTML = '';
+  document.getElementById('save-drive-btn').style.display = 'none';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2048,
+        system: BOX_SYSTEM,
+        messages: [{ role: 'user', content: promptText }],
+      }),
+    });
+
+    if(!resp.ok) {
+      const err = await resp.json().catch(()=>({error:{message:resp.statusText}}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const text = data.content?.find(b=>b.type==='text')?.text || '';
+    lastOutput = text;
+    lastTaskName = task.name;
+
+    const out = document.getElementById('out-block');
+    out.textContent = text;
+    const cb = document.createElement('button');
+    cb.className = 'copy-btn'; cb.textContent = 'COPY';
+    cb.onclick = () => { navigator.clipboard.writeText(text).then(()=>{ cb.textContent='COPIED!'; setTimeout(()=>cb.textContent='COPY',2000); }); };
+    out.insertBefore(cb, out.firstChild);
+
+    if(biases.length) {
+      document.getElementById('bias-display').innerHTML = `<div class="bias-note">⚠ BOX Bias Corrections Applied: ${biases.join(', ')}</div>`;
+    }
+    document.getElementById('save-drive-btn').style.display = 'inline-block';
+
+  } catch(e) {
+    document.getElementById('out-block').innerHTML = `<div class="err-note">⚠ API Error: ${e.message}<br><br>Check your API key is correct and has credits.</div>`;
+  }
+
+  btn.disabled = false; btn.textContent = '▶ Run AI Assist';
+}
+
+
+// ─── BOX KEY LOCATIONS FOR NDFD ──────────────────────────────────────────────
+// lat/lon for NWS point forecast API (key BOX CWA locations)
+const NDFD_POINTS = {
+  'Boston':      {lat:42.36, lon:-71.06},
+  'Worcester':   {lat:42.27, lon:-71.80},
+  'Providence':  {lat:41.82, lon:-71.41},
+  'Nantucket':   {lat:41.28, lon:-70.10},
+  'Hyannis':     {lat:41.65, lon:-70.28},
+  'Hartford':    {lat:41.76, lon:-72.68},
+  'Cape Cod':    {lat:41.84, lon:-70.02},
+};
+
+// MOS stations — use same 10 TAF stations
+const MOS_STATIONS = ['KBOS','KORH','KPVD','KBDL','KACK','KHYA','KMVY'];
+
+// NDFD element codes for DWML query
+const NDFD_ELEMS = 'maxt+mint+temp+dew+wspd+wdir+wx+sky+qpf+snow+pop12+wgust+appt+ptornado+phail+ptstmwinds+psevere';
+
+async function fetchNDFDPoint(name, lat, lon) {
+  // Use NWS API gridpoints for deterministic hourly forecast
+  try {
+    const meta = await nwsGet(`${NWS}/points/${lat},${lon}`);
+    const gridId  = meta.properties.gridId;
+    const gridX   = meta.properties.gridX;
+    const gridY   = meta.properties.gridY;
+
+    // Fetch hourly forecast + gridded data in parallel
+    const [hourly, gridded] = await Promise.all([
+      nwsGet(`${NWS}/gridpoints/${gridId}/${gridX},${gridY}/forecast/hourly`),
+      nwsGet(`${NWS}/gridpoints/${gridId}/${gridX},${gridY}`),
+    ]);
+
+    const props = gridded.properties || {};
+    const periods = (hourly.properties||{}).periods || [];
+
+    // Extract next 48h of hourly data
+    const now = new Date();
+    const next48 = periods.filter(p => new Date(p.startTime) < new Date(now.getTime() + 48*3600000)).slice(0,48);
+
+    // Summarize by 6h blocks
+    const blocks = [];
+    for(let i=0;i<48;i+=6){
+      const chunk = next48.slice(i,i+6);
+      if(!chunk.length) break;
+      const t0 = new Date(chunk[0].startTime);
+      const label = t0.toUTCString().slice(5,11)+' '+String(t0.getUTCHours()).padStart(2,'0')+'Z';
+      const temps  = chunk.map(p=>p.temperature).filter(v=>v!=null);
+      const winds  = chunk.map(p=>p.windSpeed ? parseInt(p.windSpeed) : 0);
+      const gusts  = chunk.map(p=>p.windGust  ? parseInt(p.windGust)  : 0);
+      const wdirs  = chunk.map(p=>p.windDirection||'').filter(Boolean);
+      const sky    = chunk.map(p=>p.shortForecast||'');
+      blocks.push({
+        label,
+        tRange: temps.length ? `${Math.min(...temps)}-${Math.max(...temps)}°F` : '—',
+        wind: winds.length ? `${Math.max(...winds)} kt` : '—',
+        gust: Math.max(...gusts) > 0 ? `G${Math.max(...gusts)} kt` : '',
+        wdir: wdirs[0]||'',
+        wx: [...new Set(sky)].join(' / ').substring(0,40),
+      });
+    }
+
+    // QPF from gridded properties
+    const qpfVals = (props.quantitativePrecipitation||{}).values||[];
+    const totalQPF = qpfVals.slice(0,48).reduce((s,v)=>s+(v.value||0),0)*0.0393701; // mm→in
+
+    // Snowfall
+    const snowVals = (props.snowfallAmount||{}).values||[];
+    const totalSnow = snowVals.slice(0,48).reduce((s,v)=>s+(v.value||0),0)*0.393701; // mm→in
+
+    // PoP
+    const popVals = (props.probabilityOfPrecipitation||{}).values||[];
+    const maxPoP = popVals.slice(0,48).reduce((mx,v)=>Math.max(mx,v.value||0),0);
+
+    // Max wind gust
+    const gustVals = (props.windGust||{}).values||[];
+    const maxGust = gustVals.slice(0,48).reduce((mx,v)=>Math.max(mx,(v.value||0)*1.94384),0); // m/s→kt
+
+    // 850mb temp proxy from 2m min temp (crude but available)
+    const minTemp = (props.minTemperature||{}).values||[];
+    const minTF = minTemp.length ? minTemp[0].value*9/5+32 : null;
+
+    return { name, lat, lon, blocks, totalQPF: totalQPF.toFixed(2), totalSnow: totalSnow.toFixed(1), maxPoP, maxGust: Math.round(maxGust), minTF, gridId, gridX, gridY, raw: props };
+  } catch(e) {
+    return { name, lat, lon, blocks:[], totalQPF:'?', totalSnow:'?', maxPoP:0, maxGust:0, error:e.message };
+  }
+}
+
+async function fetchNDFDProb(lat, lon) {
+  // NDFD probabilistic via NWS API gridpoints for PoP12, prob severe
+  try {
+    const meta = await nwsGet(`${NWS}/points/${lat},${lon}`);
+    const gid = meta.properties.gridId, gx = meta.properties.gridX, gy = meta.properties.gridY;
+    const props = (await nwsGet(`${NWS}/gridpoints/${gid}/${gx},${gy}`)).properties||{};
+
+    const extractHourly = (field) => {
+      const vals = (props[field]||{}).values||[];
+      return vals.slice(0,24).map(v => ({t: v.validTime, v: Math.round(v.value||0)}));
+    };
+
+    return {
+      pop:         extractHourly('probabilityOfPrecipitation'),
+      thunderProb: extractHourly('probabilityOfThunder'),
+      skyCover:    extractHourly('skyCover'),
+      windProb:    extractHourly('probabilityOfHurricaneWinds'), // proxy for high wind
+    };
+  } catch(e) { return {}; }
+}
+
+async function fetchMOS(station) {
+  // NWS MOS text products — MAV (GFS MOS) and MEX (Extended MOS)
+  try {
+    const mavList = await nwsGet(`${NWS}/products/types/MAV/locations/${station}`);
+    if(!mavList['@graph']?.length) return { station, text:'' };
+    const prod = await nwsGet(mavList['@graph'][0]['@id'] || mavList['@graph'][0].id);
+    return { station, text: prod.productText || '' };
+  } catch(e) {
+    // Try MEX if MAV fails
+    try {
+      const mexList = await nwsGet(`${NWS}/products/types/FWS/locations/BOX`);
+      return { station, text:'' };
+    } catch(e2) { return { station, text:'' }; }
+  }
+}
+
+async function fetchSounding(station) {
+  // RUC soundings via rucsoundings.noaa.gov (public, CORS-enabled)
+  // Returns GSD format sounding for latest analysis hour
+  try {
+    const url = `https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=GFS&latest=latest&start_year=2024&n_hrs=1.0&fcst_len=shortest&airport=${station}&hydrometeors=false&start=latest`;
+    const resp = await fetch(url);
+    const text = await resp.text();
+    if(!text || text.length < 100) return { station, text:'', parsed:null };
+
+    // Parse key levels from GSD format
+    const lines = text.split('\n');
+    const levels = [];
+    for(const line of lines) {
+      const parts = line.trim().split(/\s+/);
+      // GSD sounding: PRES HGHT TEMP DWPT WDIR WSPD
+      if(parts.length >= 6 && /^\d{3,4}$/.test(parts[0]) && parseInt(parts[0]) <= 1050) {
+        const pres = parseInt(parts[0]);
+        const hght = parseInt(parts[1]);
+        const temp = parseInt(parts[2])/10;  // tenths of C
+        const dwpt = parseInt(parts[3])/10;
+        const wdir = parseInt(parts[4]);
+        const wspd = parseInt(parts[5]);
+        if(!isNaN(pres) && !isNaN(temp) && pres >= 100) {
+          levels.push({pres, hght, temp, dwpt, wdir, wspd});
+        }
+      }
+    }
+
+    // Extract key levels
+    const get = (p) => levels.find(l => Math.abs(l.pres-p) <= 25);
+    const sfc  = levels[0];
+    const l850 = get(850);
+    const l700 = get(700);
+    const l500 = get(500);
+
+    const summary = [
+      sfc   ? `SFC: ${sfc.temp}°C / ${sfc.dwpt}°C  Wind: ${sfc.wdir}°/${sfc.wspd}kt` : '',
+      l850  ? `850mb: ${l850.temp}°C / ${l850.dwpt}°C  Wind: ${l850.wdir}°/${l850.wspd}kt  Hgt:${l850.hght}m` : '',
+      l700  ? `700mb: ${l700.temp}°C  Wind: ${l700.wdir}°/${l700.wspd}kt  Hgt:${l700.hght}m` : '',
+      l500  ? `500mb: ${l500.temp}°C  Wind: ${l500.wdir}°/${l500.wspd}kt  Hgt:${l500.hght}m` : '',
+    ].filter(Boolean).join('\n');
+
+    return { station, text, parsed: {sfc, l850, l700, l500, levels}, summary };
+  } catch(e) { return { station, text:'', parsed:null, error:e.message }; }
+}
+
+// ─── MAIN MODEL FETCH ─────────────────────────────────────────────────────────
+async function fetchModelData() {
+  const btn = document.getElementById('model-fetch-btn');
+  const btn2 = document.getElementById('model-load-btn');
+  if(btn) { btn.textContent = '⟳ Loading...'; btn.disabled = true; }
+  if(btn2) { btn2.textContent = '📡 Loading...'; btn2.disabled = true; }
+
+  // Show loading state
+  document.getElementById('mp-ndfd').innerHTML = '<div class="model-loading"><span class="spin"></span>Fetching NDFD grids...</div>';
+  document.getElementById('mp-prob').innerHTML = '<div class="model-loading"><span class="spin"></span>Fetching probabilities...</div>';
+  document.getElementById('mp-mos').innerHTML  = '<div class="model-loading"><span class="spin"></span>Fetching MOS guidance...</div>';
+  document.getElementById('mp-snd').innerHTML  = '<div class="model-loading"><span class="spin"></span>Fetching soundings...</div>';
+
+  try {
+    // Fetch NDFD for all key BOX points
+    const ndfdPromises = Object.entries(NDFD_POINTS).map(([n,p]) => fetchNDFDPoint(n, p.lat, p.lon));
+    // Prob for Boston + Nantucket (representative coastal + inland)
+    const probPromises = [
+      fetchNDFDProb(NDFD_POINTS.Boston.lat,    NDFD_POINTS.Boston.lon),
+      fetchNDFDProb(NDFD_POINTS.Nantucket.lat, NDFD_POINTS.Nantucket.lon),
+    ];
+    // MOS for key stations
+    const mosPromises = MOS_STATIONS.slice(0,4).map(fetchMOS);
+    // Soundings for KBOS + KACK
+    const sndPromises = ['KBOS','KACK'].map(fetchSounding);
+
+    const [ndfdResults, probResults, mosResults, sndResults] = await Promise.all([
+      Promise.all(ndfdPromises),
+      Promise.all(probPromises),
+      Promise.all(mosPromises),
+      Promise.all(sndPromises),
+    ]);
+
+    // Store in liveData
+    liveData.ndfd = {};
+    ndfdResults.forEach(r => { liveData.ndfd[r.name] = r; });
+    liveData.ndfdProb = { boston: probResults[0], nantucket: probResults[1] };
+    liveData.mos = {};
+    mosResults.forEach(r => { liveData.mos[r.station] = r; });
+    liveData.soundings = {};
+    sndResults.forEach(r => { liveData.soundings[r.station] = r; });
+    liveData.modelLoaded = true;
+
+    // Build text summary for auto-fill
+    liveData.modelSummary = buildModelSummary();
+
+    // Render panels
+    renderNDFDPanel();
+    renderProbPanel();
+    renderMOSPanel();
+    renderSoundingPanel();
+
+    showToast(`Model data loaded — NDFD ${ndfdResults.filter(r=>!r.error).length}/${ndfdResults.length} points, MOS ${mosResults.filter(r=>r.text).length}/${mosResults.length} stations`, false);
+  } catch(e) {
+    document.getElementById('mp-ndfd').innerHTML = `<div class="model-loading" style="color:var(--alert)">Error: ${e.message}</div>`;
+    showToast('Model data error: ' + e.message, true);
+  }
+
+  if(btn)  { btn.textContent = '⟳ Refresh'; btn.disabled = false; }
+  if(btn2) { btn2.textContent = '📡 Load Model Guidance'; btn2.disabled = false; }
+}
+
+function buildModelSummary() {
+  const lines = ['=== NWS NDFD + MOS GUIDANCE (auto-imported) ===', ''];
+
+  // QPF / Snow summary across BOX
+  const bos = liveData.ndfd['Boston'];
+  const wor = liveData.ndfd['Worcester'];
+  const ack = liveData.ndfd['Nantucket'];
+  const hya = liveData.ndfd['Hyannis'];
+
+  if(bos || wor) {
+    lines.push('--- NDFD QPF / SNOWFALL (next 48h) ---');
+    Object.values(liveData.ndfd).forEach(p => {
+      if(!p.error) lines.push(`${p.name.padEnd(12)}: QPF ${p.totalQPF}" | Snow ${p.totalSnow}" | MaxPoP ${p.maxPoP}% | MaxGust ${p.maxGust}kt`);
+    });
+    lines.push('');
+  }
+
+  // PoP probabilities
+  const prob = liveData.ndfdProb.boston;
+  if(prob?.pop?.length) {
+    lines.push('--- NDFD PoP (Boston, next 24h) ---');
+    const popSlice = prob.pop.slice(0,8);
+    lines.push(popSlice.map(v=>`${new Date(v.t.split('/')[0]).toUTCString().slice(17,22)}Z:${v.v}%`).join('  '));
+    const maxThunder = prob.thunderProb ? Math.max(...prob.thunderProb.map(v=>v.v)) : 0;
+    if(maxThunder > 10) lines.push(`Max thunder prob (24h): ${maxThunder}%`);
+    lines.push('');
+  }
+
+  // 6-hourly breakdown for Boston
+  if(bos?.blocks?.length) {
+    lines.push('--- NDFD 6-HOURLY FORECAST (Boston) ---');
+    bos.blocks.forEach(b => lines.push(`${b.label}  Temp:${b.tRange}  Wind:${b.wdir} ${b.wind}${b.gust?' '+b.gust:''}  ${b.wx}`));
+    lines.push('');
+  }
+
+  // Soundings
+  const bosSnd = liveData.soundings['KBOS'];
+  const ackSnd = liveData.soundings['KACK'];
+  if(bosSnd?.summary || ackSnd?.summary) {
+    lines.push('--- UPPER AIR SOUNDINGS ---');
+    if(bosSnd?.summary) { lines.push('KBOS:'); lines.push(bosSnd.summary); }
+    if(ackSnd?.summary) { lines.push('KACK:'); lines.push(ackSnd.summary); }
+    lines.push('');
+  }
+
+  // MOS snippet
+  const bosMOS = liveData.mos['KBOS'];
+  if(bosMOS?.text) {
+    const lines2 = bosMOS.text.split('\n').slice(0,20).join('\n');
+    lines.push('--- MOS GUIDANCE (KBOS MAV) ---');
+    lines.push(lines2);
+    lines.push('');
+  }
+
+  lines.push('=== NOTE: Apply BOX bias corrections as appropriate ===');
+  return lines.join('\n');
+}
+
+// ─── RENDER MODEL PANELS ──────────────────────────────────────────────────────
+function renderNDFDPanel() {
+  const points = Object.values(liveData.ndfd);
+  if(!points.length) { document.getElementById('mp-ndfd').innerHTML = '<div class="model-loading">No data</div>'; return; }
+
+  let html = '';
+  points.forEach(p => {
+    const hasErr = !!p.error;
+    html += `<div style="padding:4px 0;border-bottom:1px solid rgba(26,45,69,.5)">
+      <div style="font-family:var(--cond);font-size:11px;font-weight:700;color:var(--bright);letter-spacing:.04em;margin-bottom:3px">${p.name} ${hasErr?'<span style="color:var(--alert);font-size:9px">ERR</span>':''}</div>`;
+    if(!hasErr) {
+      html += `<div class="model-row"><span class="model-lbl">QPF 48h</span><span class="model-val ${parseFloat(p.totalQPF)>1?'hi':''}">${p.totalQPF}"</span></div>
+        <div class="model-row"><span class="model-lbl">Snow 48h</span><span class="model-val ${parseFloat(p.totalSnow)>2?'hi':''}">${p.totalSnow}"</span></div>
+        <div class="model-row"><span class="model-lbl">Max PoP</span><span class="model-val ${p.maxPoP>70?'hi':p.maxPoP>40?'ok':''}">${p.maxPoP}%</span></div>
+        <div class="model-row"><span class="model-lbl">Max Gust</span><span class="model-val ${p.maxGust>35?'hi':p.maxGust>25?'ok':''}">${p.maxGust}kt</span></div>`;
+      p.blocks.slice(0,4).forEach(b => {
+        html += `<div class="model-row" style="font-size:9.5px"><span class="model-lbl" style="font-size:9px">${b.label}</span><span class="model-val" style="font-size:9px">${b.wdir} ${b.wind}${b.gust?' '+b.gust:''} · ${b.tRange}</span></div>`;
+      });
+    }
+    html += '</div>';
+  });
+  document.getElementById('mp-ndfd').innerHTML = html;
+}
+
+function renderProbPanel() {
+  const prob = liveData.ndfdProb.boston || {};
+  const probAck = liveData.ndfdProb.nantucket || {};
+  if(!prob.pop?.length) { document.getElementById('mp-prob').innerHTML = '<div class="model-loading">No probability data</div>'; return; }
+
+  const renderBars = (label, arr, color) => {
+    if(!arr?.length) return '';
+    return `<div style="margin-bottom:10px"><div style="font-family:var(--cond);font-size:10px;font-weight:700;color:var(--text);letter-spacing:.06em;margin-bottom:4px">${label}</div>` +
+      arr.slice(0,12).map(v => {
+        const pct = Math.min(100, Math.round(v.v||0));
+        const t = new Date(v.t.split('/')[0]);
+        const lbl = String(t.getUTCHours()).padStart(2,'0')+'Z';
+        const fillColor = pct > 70 ? 'var(--alert)' : pct > 40 ? 'var(--warn)' : color;
+        return `<div class="prob-bar-wrap">
+          <span class="prob-bar-lbl">${lbl}</span>
+          <div class="prob-bar"><div class="prob-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+          <span class="prob-pct">${pct}%</span>
+        </div>`;
+      }).join('') + '</div>';
+  };
+
+  document.getElementById('mp-prob').innerHTML =
+    '<div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:.1em;margin-bottom:6px">BOSTON</div>' +
+    renderBars('PoP (%)', prob.pop, 'var(--accent)') +
+    renderBars('Thunder Prob (%)', prob.thunderProb, 'var(--warn)') +
+    renderBars('Sky Cover (%)', prob.skyCover, 'var(--muted)') +
+    '<div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent2);letter-spacing:.1em;margin:8px 0 6px">NANTUCKET</div>' +
+    renderBars('PoP (%)', probAck.pop, 'var(--accent2)');
+}
+
+function renderMOSPanel() {
+  const entries = Object.values(liveData.mos).filter(m=>m.text);
+  if(!entries.length) {
+    document.getElementById('mp-mos').innerHTML = '<div class="model-loading">MOS not available via NWS API for these stations.<br><br>MAV/MEX text products load for some stations — try again or paste from AWIPS.</div>';
+    return;
+  }
+  document.getElementById('mp-mos').innerHTML = entries.map(m =>
+    `<div style="margin-bottom:10px"><div style="font-family:var(--cond);font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px">${m.station}</div>
+    <pre style="font-family:var(--mono);font-size:9px;color:var(--muted);white-space:pre-wrap;line-height:1.5">${m.text.substring(0,600)}</pre></div>`
+  ).join('');
+}
+
+function renderSoundingPanel() {
+  const entries = Object.values(liveData.soundings);
+  const hasSnd = entries.some(s=>s.parsed);
+  if(!hasSnd) {
+    document.getElementById('mp-snd').innerHTML = '<div class="model-loading">RUC/GFS soundings not available — CORS restrictions on rucsoundings.noaa.gov in browser.<br><br>Sounding data from model summary will still be included in auto-fill if available.</div>';
+    return;
+  }
+  document.getElementById('mp-snd').innerHTML = entries.filter(s=>s.parsed).map(s => {
+    const p = s.parsed;
+    const rows = [
+      ['SFC', p.sfc],
+      ['850mb', p.l850],
+      ['700mb', p.l700],
+      ['500mb', p.l500],
+    ].filter(([,v])=>v);
+    return `<div style="margin-bottom:12px">
+      <div style="font-family:var(--cond);font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px">${s.station}</div>
+      ${rows.map(([lbl,v])=>`<div class="model-row">
+        <span class="model-lbl">${lbl}</span>
+        <span class="model-val" style="font-size:9.5px">${v.temp}°C / ${v.wdir}°@${v.wspd}kt</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function showMTab(id) {
+  document.querySelectorAll('.mtab').forEach((t,i) => t.classList.toggle('active', ['ndfd','prob','mos','snd'][i]===id));
+  document.querySelectorAll('.model-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('mp-'+id).classList.add('active');
+}
+
+
+// ─── AFD PROMPT BUILDERS ──────────────────────────────────────────────────────
+
+function detectScenario(live) {
+  // Detect the predominant weather scenario from NDFD data
+  const points = Object.values(live.ndfd || {});
+  if(!points.length) return { type:'unknown', hazards:[], confidence:'LOW' };
+
+  const maxQPF   = Math.max(...points.map(p => parseFloat(p.totalQPF)||0));
+  const maxSnow  = Math.max(...points.map(p => parseFloat(p.totalSnow)||0));
+  const maxPop   = Math.max(...points.map(p => p.maxPoP||0));
+  const maxGust  = Math.max(...points.map(p => p.maxGust||0));
+  const maxThunder = live.ndfdProb?.boston?.thunderProb
+    ? Math.max(...live.ndfdProb.boston.thunderProb.map(v=>v.v||0)) : 0;
+
+  const hazards = [];
+  let type = 'routine';
+
+  if(maxSnow > 4)  { type = 'winter_storm'; hazards.push(`Heavy snow — up to ${maxSnow.toFixed(1)}" NDFD`); }
+  else if(maxSnow > 1) { hazards.push(`Snow possible — ${maxSnow.toFixed(1)}" NDFD`); type = 'winter_light'; }
+  if(maxQPF > 1.5) { if(type === 'routine') type = 'heavy_rain'; hazards.push(`Heavy rain — ${maxQPF.toFixed(2)}" QPF`); }
+  if(maxGust > 35) { hazards.push(`High winds — gusts to ${maxGust}kt`); if(type==='routine') type='wind'; }
+  if(maxGust > 25 && type === 'routine') { type = 'breezy'; hazards.push(`Breezy — gusts to ${maxGust}kt`); }
+  if(maxThunder > 30) { hazards.push(`Thunderstorm potential — ${maxThunder}%`); if(type==='routine') type='convective'; }
+  if(maxPop < 20 && maxSnow < 0.5 && maxGust < 20) { type='quiet'; hazards.push('No significant hazards in NDFD'); }
+
+  // Confidence based on spread across points
+  const qpfSpread = Math.max(...points.map(p=>parseFloat(p.totalQPF)||0)) - Math.min(...points.map(p=>parseFloat(p.totalQPF)||0));
+  const confidence = qpfSpread > 1.5 ? 'LOW' : qpfSpread > 0.5 ? 'MEDIUM' : 'HIGH';
+
+  return { type, hazards, confidence, maxQPF, maxSnow, maxPop, maxGust, maxThunder };
+}
+
+function formatNDFDForAFD(live) {
+  const points = Object.values(live.ndfd || {});
+  if(!points.length) return 'NDFD not loaded — click "Load Model Guidance" first.';
+
+  const lines = [];
+
+  // Cross-BOX QPF/snow table
+  lines.push('NDFD QPF + SNOWFALL (next 48h):');
+  points.filter(p=>!p.error).forEach(p => {
+    lines.push(`  ${p.name.padEnd(14)}: QPF=${p.totalQPF}"  Snow=${p.totalSnow}"  MaxPoP=${p.maxPoP}%  MaxGust=${p.maxGust}kt`);
+  });
+  lines.push('');
+
+  // PoP time series — Boston + Nantucket (inland vs coastal gradient)
+  const probBos = live.ndfdProb?.boston;
+  const probAck = live.ndfdProb?.nantucket;
+  if(probBos?.pop?.length) {
+    lines.push('NDFD PoP TIME SERIES:');
+    lines.push('  Boston:    ' + probBos.pop.slice(0,12).map(v => {
+      const h = String(new Date(v.t.split('/')[0]).getUTCHours()).padStart(2,'0');
+      return `${h}Z:${String(v.v).padStart(3)}%`;
+    }).join('  '));
+    if(probAck?.pop?.length) {
+      lines.push('  Nantucket: ' + probAck.pop.slice(0,12).map(v => {
+        const h = String(new Date(v.t.split('/')[0]).getUTCHours()).padStart(2,'0');
+        return `${h}Z:${String(v.v).padStart(3)}%`;
+      }).join('  '));
+    }
+    lines.push('');
+  }
+
+  // Thunder prob
+  if(probBos?.thunderProb?.length) {
+    const maxT = Math.max(...probBos.thunderProb.map(v=>v.v||0));
+    if(maxT > 5) lines.push(`NDFD THUNDER PROB (Boston max 24h): ${maxT}%\n`);
+  }
+
+  // 6-hourly forecast for key points
+  const keyPoints = ['Boston','Worcester','Nantucket','Hyannis'];
+  keyPoints.forEach(name => {
+    const p = live.ndfd[name];
+    if(!p || p.error || !p.blocks?.length) return;
+    lines.push(`NDFD 6-HOURLY — ${name.toUpperCase()}:`);
+    p.blocks.forEach(b => {
+      lines.push(`  ${b.label}  T:${b.tRange}  Wind:${b.wdir} ${b.wind}${b.gust?' '+b.gust:''}  ${b.wx}`);
+    });
+    lines.push('');
+  });
+
+  return lines.join('\n');
+}
+
+function formatSoundingsForAFD(live) {
+  const snd = live.soundings || {};
+  const lines = [];
+  ['KBOS','KACK'].forEach(sta => {
+    const s = snd[sta];
+    if(!s?.parsed) return;
+    const p = s.parsed;
+    lines.push(`${sta} SOUNDING:`);
+    if(p.sfc)  lines.push(`  SFC:   ${p.sfc.temp}°C / ${p.sfc.dwpt}°C  Wind: ${p.sfc.wdir}°@${p.sfc.wspd}kt`);
+    if(p.l850) lines.push(`  850mb: ${p.l850.temp}°C / ${p.l850.dwpt}°C  Wind: ${p.l850.wdir}°@${p.l850.wspd}kt  Hgt:${p.l850.hght}m`);
+    if(p.l700) lines.push(`  700mb: ${p.l700.temp}°C  Wind: ${p.l700.wdir}°@${p.l700.wspd}kt  Hgt:${p.l700.hght}m`);
+    if(p.l500) lines.push(`  500mb: ${p.l500.temp}°C  Wind: ${p.l500.wdir}°@${p.l500.wspd}kt  Hgt:${p.l500.hght}m`);
+
+    // Dendritic growth zone flag
+    if(p.l700 && p.l700.temp >= -18 && p.l700.temp <= -12)
+      lines.push(`  *** DENDRITIC GROWTH ZONE ACTIVE (700mb ${p.l700.temp}°C) — BOX banding bias applies ***`);
+
+    // Warm nose check for FZRA
+    if(p.l850 && p.l850.temp > 0 && p.sfc && p.sfc.temp < 2)
+      lines.push(`  *** WARM NOSE: 850mb=${p.l850.temp}°C above freezing, SFC=${p.sfc.temp}°C — FZRA/sleet risk ***`);
+
+    lines.push('');
+  });
+  return lines.join('\n') || 'No sounding data loaded.';
+}
+
+function formatMOSForAFD(live) {
+  const mos = live.mos || {};
+  const lines = [];
+  Object.values(mos).slice(0,3).forEach(m => {
+    if(!m.text) return;
+    const excerpt = m.text.split('\n').slice(0,25).join('\n');
+    lines.push(`MOS (${m.station}):\n${excerpt}\n`);
+  });
+  return lines.join('\n') || 'MOS not loaded.';
+}
+
+function formatMetarsForAFD(live) {
+  const metars = live.metars || {};
+  return Object.values(metars).map(m => m.summary).join('\n') || 'No METARs loaded.';
+}
+
+function buildAFDPrompt(f, live) {
+  const scenario = detectScenario(live);
+  const ndfdText    = formatNDFDForAFD(live);
+  const soundingTxt = formatSoundingsForAFD(live);
+  const mosTxt      = formatMOSForAFD(live);
+  const obsText     = formatMetarsForAFD(live);
+  const sections    = f.sections || 'Synopsis + Short Term + Long Term';
+  const now = new Date().toUTCString().slice(5,22);
+
+  return `TASK: Write a complete NWS AFD (Area Forecast Discussion) for WFO BOX.
+ISSUE TIME: ${now}
+SECTIONS REQUESTED: ${sections}
+DETECTED SCENARIO: ${scenario.type.toUpperCase()} — ${scenario.hazards.join(', ')||'Routine'}
+NDFD CONFIDENCE: ${scenario.confidence}
+
+====== NWS NDFD GRIDDED DATA (auto-imported) ======
+${ndfdText}
+
+====== UPPER AIR SOUNDINGS ======
+${soundingTxt}
+
+====== MOS GUIDANCE ======
+${mosTxt}
+
+====== CURRENT SURFACE OBSERVATIONS (all 10 BOX TAF stations) ======
+${obsText}
+
+====== LATEST BOX AFD (for style/context reference) ======
+${live.afd ? live.afd.substring(0, 1800) : 'Not loaded'}
+
+====== ACTIVE ALERTS ======
+${live.alertSummary || 'None'}
+
+====== FORECASTER NOTES / OVERRIDES ======
+${f.forecaster_notes || 'None'}
+
+====== ADDITIONAL GUIDANCE ======
+${f.extra_guidance || 'None provided'}
+
+INSTRUCTIONS:
+Write the requested AFD sections based entirely on the NDFD, sounding, MOS, and obs data above.
+Format requirements:
+- Use NWS AFD standard formatting with section headers (.SYNOPSIS, .SHORT TERM, .LONG TERM, etc.)
+- Write in concise operational meteorology style — no fluff, no hedging without basis
+- NDFD data drives the forecast. Where NDFD shows spread or uncertainty, flag it explicitly.
+- Apply ALL applicable BOX bias corrections (listed in your system context):
+    * If dendritic zone active: note banding potential, adjust QPF upward 2-4"
+    * If warm nose detected: apply FZRA/sleet cold layer threshold
+    * If NW flow + KACK/KMVY: add 5-10kt to NDFD gust for Cape/Islands
+    * If coastal zones: shift rain/snow line 20-40mi NW of model
+    * If rapid deepening: add 2-3ft to SWH for offshore ANZ zones
+- After each section, add a one-line CONFIDENCE rating with reasoning
+- End each section with &&
+- Flag which BOX biases were applied with NOTE: lines`;
+}
+
+function buildAvnMarinePrompt(f, live) {
+  const scenario   = detectScenario(live);
+  const ndfdText   = formatNDFDForAFD(live);
+  const soundingTxt = formatSoundingsForAFD(live);
+  const obsText    = formatMetarsForAFD(live);
+  const now = new Date().toUTCString().slice(5,22);
+
+  return `TASK: Write the .AVIATION and .MARINE sections of the BOX AFD.
+ISSUE TIME: ${now}
+SCENARIO: ${scenario.type.toUpperCase()} — ${scenario.hazards.join(', ')||'Routine'}
+
+====== NDFD GRIDDED DATA ======
+${ndfdText}
+
+====== SOUNDINGS ======
+${soundingTxt}
+
+====== CURRENT METAR OBS ======
+${obsText}
+
+====== CWF CONTEXT ======
+${live.cwf ? live.cwf.substring(0,600) : 'Not loaded'}
+
+====== ACTIVE ALERTS ======
+${live.alertSummary || 'None'}
+
+====== AVIATION NOTES ======
+${f.avn_notes || 'None'}
+
+====== MARINE NOTES ======
+${f.marine_notes || 'None'}
+
+INSTRUCTIONS:
+Write .AVIATION and .MARINE sections based on the NDFD and obs data above.
+
+For .AVIATION:
+- Summarize ceiling/vis trends for all 10 BOX TAF stations (KBOS KORH KPVD KBDL KACK KHYA KMVY KOWD KFIT KEEN)
+- Note precip type and timing at each station
+- Flag amendment thresholds likely to be crossed
+- Apply Cape/Islands NW gust bias (KACK/KMVY underforecast by 5-10kt in NW flow)
+
+For .MARINE:
+- Cover all 13 ANZ zones (ANZ230-239, ANZ250-252)
+- State wind forecast, seas, and swell by zone grouping
+- Apply SWH bias if deepening rate > 20mb/24hr (add 2-3ft offshore)
+- Flag SCA/gale/storm criteria if NDFD winds approach thresholds
+- Apply Buzzards Bay / Cape Cod Bay channeling as appropriate
+
+End each section with &&.`;
+}
+
+// ─── GOOGLE DRIVE ─────────────────────────────────────────────────────────────
+// Uses Google Drive API via gapi (loaded from CDN on first use)
+let gapiLoaded = false;
+let driveAuthed = false;
+const DRIVE_CLIENT_ID_KEY = 'box_drive_client_id';
+const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+async function saveToDrive() {
+  if(!lastOutput) { showToast('No output to save yet', true); return; }
+
+  // Prompt for credentials if not saved
+  let clientId = localStorage.getItem(DRIVE_CLIENT_ID_KEY) || '';
+  if(!clientId) {
+    clientId = prompt('Enter your Google OAuth Client ID (from console.cloud.google.com):\n\nSee the script header in box_forecast_assist_v3.py for setup instructions.\nYour Client ID ends in .apps.googleusercontent.com');
+    if(!clientId) return;
+    localStorage.setItem(DRIVE_CLIENT_ID_KEY, clientId);
+  }
+
+  const btn = document.getElementById('save-drive-btn');
+  btn.textContent = '⏳ Saving...'; btn.disabled = true;
+
+  try {
+    // Load gapi on demand
+    if(!gapiLoaded) await loadGapi();
+
+    // Init gapi client
+    await new Promise((res,rej) => gapi.load('client:auth2', {callback:res, onerror:rej}));
+    await gapi.client.init({
+      clientId,
+      scope: DRIVE_SCOPES,
+      discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+    });
+
+    // Sign in if needed
+    const auth = gapi.auth2.getAuthInstance();
+    if(!auth.isSignedIn.get()) await auth.signIn();
+
+    await gapi.client.load('drive','v3');
+
+    // Get or create folder
+    let folderId = null;
+    const fq = await gapi.client.drive.files.list({
+      q: "name='WFO BOX Forecast Assist' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+      fields: 'files(id)',
+    });
+    if(fq.result.files?.length) {
+      folderId = fq.result.files[0].id;
+    } else {
+      const fc = await gapi.client.drive.files.create({
+        resource: { name:'WFO BOX Forecast Assist', mimeType:'application/vnd.google-apps.folder' },
+        fields: 'id',
+      });
+      folderId = fc.result.id;
+    }
+
+    // Upload as Google Doc
+    const ts = new Date().toISOString().slice(0,16).replace('T',' ').replace(':','')+'Z';
+    const title = `BOX ${lastTaskName} ${ts}`;
+    const boundary = '-------314159265358979323846';
+    const body = [
+      `--${boundary}`,
+      'Content-Type: application/json; charset=UTF-8',
+      '',
+      JSON.stringify({name:title, mimeType:'application/vnd.google-apps.document', parents:[folderId]}),
+      `--${boundary}`,
+      'Content-Type: text/plain; charset=UTF-8',
+      '',
+      lastOutput,
+      `--${boundary}--`,
+    ].join('\r\n');
+
+    const up = await gapi.client.request({
+      path: 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',
+      method: 'POST',
+      headers: {'Content-Type': `multipart/related; boundary="${boundary}"`},
+      body,
+    });
+
+    const link = up.result.webViewLink;
+    document.getElementById('drive-result').innerHTML = `<div class="ok-note">✓ Saved to Google Drive: <a href="${link}" target="_blank">Open "${title}" ↗</a></div>`;
+    showToast('Saved to Drive ✓', false);
+
+  } catch(e) {
+    // Clear client ID if auth failed so user can re-enter
+    if(/invalid_client|client_id/.test(e.message||'')) localStorage.removeItem(DRIVE_CLIENT_ID_KEY);
+    document.getElementById('drive-result').innerHTML = `<div class="err-note">⚠ Drive error: ${e.message||JSON.stringify(e)}</div>`;
+    showToast('Drive save failed — see output pane', true);
+  }
+
+  btn.textContent = '⬆ Drive'; btn.disabled = false;
+}
+
+function loadGapi() {
+  return new Promise((res,rej) => {
+    if(window.gapi) { res(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://apis.google.com/js/api.js';
+    s.onload = () => { gapiLoaded = true; res(); };
+    s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+function showToast(msg, isErr) {
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast' + (isErr?' err':'');
+  t.innerHTML = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 4000);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+loadTask('afd');
+// Show scenario detection status when model data available
+document.addEventListener('modelLoaded', () => {
+  if(currentTask === 'afd') updateScenarioBanner();
+});
+// Show API key modal if no key entered
+setTimeout(()=>{
+  if(!apiKey) document.getElementById('modal-bg').classList.remove('hidden');
+}, 800);
+</script>
+</body>
+</html>
