@@ -744,23 +744,20 @@ async function fetchMetar(sta) {
     const wx  = (p.presentWeather||[]).map(w=>w.rawString).filter(Boolean).join(' ');
     const tf  = tc!=null ? Math.round(tc*9/5+32) : '?';
     const df  = dc!=null ? Math.round(dc*9/5+32) : '?';
-    const wdir = wd!=null ? String(Math.round(wd)).padStart(3,'0') : 'VRB';
-    // NWS API returns km/h — convert to knots. Fall back to parsing raw METAR if value is 0/null
-    let wspd = ws!=null ? Math.round(ws/1.852) : 0;
-    let wgst = wg!=null ? Math.round(wg/1.852) : 0;
-    // If API gives 0 wind but raw METAR has data, parse raw METAR directly
-    if(wspd === 0 && p.rawMessage) {
+    // Always parse wind from raw METAR -- API fields are unreliable
+    let wdir = 'VRB', wspd = 0, wgst = 0;
+    if(p.rawMessage) {
       const wndMatch = p.rawMessage.match(/(\d{3}|VRB)(\d{2,3})(G(\d{2,3}))?KT/);
       if(wndMatch) {
+        wdir = wndMatch[1];
         wspd = parseInt(wndMatch[2]) || 0;
         wgst = wndMatch[4] ? parseInt(wndMatch[4]) : 0;
       }
     }
-    // Also parse gust from raw if API gust is 0 but raw has one
-    if(wgst === 0 && p.rawMessage) {
-      const gstMatch = p.rawMessage.match(/G(\d{2,3})KT/);
-      if(gstMatch) wgst = parseInt(gstMatch[1]) || 0;
-    }
+    // Fall back to API fields only if raw parse gave nothing
+    if(wspd === 0 && ws != null) wspd = Math.round(ws/1.852);
+    if(wgst === 0 && wg != null) wgst = Math.round(wg/1.852);
+    if(wdir === 'VRB' && wd != null && wd > 0) wdir = String(Math.round(wd)).padStart(3,'0');
     const vsm  = vi!=null ? Math.round(vi/160934)/10 : '?';
     const skyStr = sky.map(l=>{ const b=l.base?.value; return b!=null?`${l.amount}${String(Math.round(b*3.28084/100)).padStart(3,'0')}`:''; }).filter(Boolean).join(' ') || 'SKC';
     const windStr = `${wdir}/${wspd}KT${wgst?'G'+wgst+'KT':''}`;
@@ -1843,11 +1840,4 @@ setTimeout(()=>{
 </body>
 </html>
 Done
-There it is — everything from <!DOCTYPE html> to </html>. Select all, copy, paste into GitHub.
-
-
-
-Want to be notified when Claude responds?
-
-
-
+There's the full code — select all, copy, paste into GitHub. Should now correctly show
