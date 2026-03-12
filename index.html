@@ -1239,13 +1239,24 @@ async function fetchNDFDPoint(name, lat, lon) {
       });
     }
 
-    // QPF from gridded properties
-    const qpfVals = (props.quantitativePrecipitation||{}).values||[];
-    const totalQPF = qpfVals.slice(0,48).reduce((s,v)=>s+(v.value||0),0)*0.0393701; // mm→in
+    // QPF/Snow: NWS gridded values use ISO8601 duration-coded intervals
+    // Each record covers PT1H, PT6H, PT12H etc — value is rate for that period
+    // Must weight by duration to get total accumulation
+    const parseDurationHours = (validTime) => {
+      if(!validTime) return 1;
+      const m = validTime.match(/PT(\d+)H/);
+      return m ? parseInt(m[1]) : 1;
+    };
 
-    // Snowfall
+    const qpfVals = (props.quantitativePrecipitation||{}).values||[];
+    // QPF values are in mm, each covering parseDurationHours hours
+    // Sum mm*hours/hours = total mm over period (values are already totals per interval, not rates)
+    const totalQPFmm = qpfVals.slice(0,48).reduce((s,v)=>s+(v.value||0),0);
+    const totalQPF = Math.min(10, totalQPFmm * 0.0393701); // mm→in, cap at 10" sanity
+
     const snowVals = (props.snowfallAmount||{}).values||[];
-    const totalSnow = snowVals.slice(0,48).reduce((s,v)=>s+(v.value||0),0)*0.393701; // mm→in
+    const totalSnowMm = snowVals.slice(0,48).reduce((s,v)=>s+(v.value||0),0);
+    const totalSnow = Math.min(36, totalSnowMm * 0.393701); // mm→in (10:1 ratio), cap 36"
 
     // PoP
     const popVals = (props.probabilityOfPrecipitation||{}).values||[];
@@ -1759,8 +1770,10 @@ function renderNDFDPanel() {
     html += `<div style="padding:4px 0;border-bottom:1px solid rgba(26,45,69,.5)">
       <div style="font-family:var(--cond);font-size:11px;font-weight:700;color:var(--bright);letter-spacing:.04em;margin-bottom:3px">${p.name} ${hasErr?'<span style="color:var(--alert);font-size:9px">ERR</span>':''}</div>`;
     if(!hasErr) {
-      html += `<div class="model-row"><span class="model-lbl">QPF 48h</span><span class="model-val ${parseFloat(p.totalQPF)>1?'hi':''}">${p.totalQPF}"</span></div>
-        <div class="model-row"><span class="model-lbl">Snow 48h</span><span class="model-val ${parseFloat(p.totalSnow)>2?'hi':''}">${p.totalSnow}"</span></div>
+      const qpfSuspect = parseFloat(p.totalQPF) > 5;
+      const snowSuspect = parseFloat(p.totalSnow) > 24;
+      html += `<div class="model-row"><span class="model-lbl">QPF 48h</span><span class="model-val ${qpfSuspect?'hi':parseFloat(p.totalQPF)>1?'ok':''}">${p.totalQPF}"${qpfSuspect?' ⚠':''}</span></div>
+        <div class="model-row"><span class="model-lbl">Snow 48h</span><span class="model-val ${snowSuspect?'hi':parseFloat(p.totalSnow)>2?'ok':''}">${p.totalSnow}"${snowSuspect?' ⚠':''}</span></div>
         <div class="model-row"><span class="model-lbl">Max PoP</span><span class="model-val ${p.maxPoP>70?'hi':p.maxPoP>40?'ok':''}">${p.maxPoP}%</span></div>
         <div class="model-row"><span class="model-lbl">Max Gust</span><span class="model-val ${p.maxGust>35?'hi':p.maxGust>25?'ok':''}">${p.maxGust}kt</span></div>`;
       p.blocks.slice(0,4).forEach(b => {
@@ -1979,9 +1992,12 @@ function formatNDFDForAFD(live) {
   const lines = [];
 
   // Cross-BOX QPF/snow table
-  lines.push('NDFD QPF + SNOWFALL (next 48h):');
+  lines.push('NDFD QPF + SNOWFALL (next 48h) — RAW VALUES FROM API:');
   points.filter(p=>!p.error).forEach(p => {
     lines.push(`  ${p.name.padEnd(14)}: QPF=${p.totalQPF}"  Snow=${p.totalSnow}"  MaxPoP=${p.maxPoP}%  MaxGust=${p.maxGust}kt`);
+    // Flag if values look suspicious
+    if(parseFloat(p.totalQPF) > 5) lines.push(`  *** WARNING: QPF=${p.totalQPF}" may be unrealistic — treat with caution ***`);
+    if(parseFloat(p.totalSnow) > 24) lines.push(`  *** WARNING: Snow=${p.totalSnow}" may be unrealistic — treat with caution ***`);
   });
   lines.push('');
 
