@@ -1270,7 +1270,8 @@ async function fetchNDFDPoint(name, lat, lon) {
         : totalSnowRaw * 39.3701;          // meters → in (default: wmoUnit:m)
     const totalSnow = Math.min(24, snowInches);
 
-    // PoP — also filtered to 48h
+    // PoP — filtered to 48h
+    const popVals48 = filterTo48h((props.probabilityOfPrecipitation||{}).values||[]);
     const maxPoP = popVals48.reduce((mx,v)=>Math.max(mx,v.value||0),0);
 
     // Max wind gust — derive from windSpeed in hourly periods (reliable mph strings)
