@@ -424,6 +424,10 @@ select.fi option { background: var(--panel2); }
       <button class="sb-btn" onclick="loadTask('wwa_cfl')">Coastal Flood</button>
     </div>
     <div class="sb-grp">
+      <div class="sb-lbl">Public Forecast</div>
+      <button class="sb-btn" onclick="loadTask('zone7day')">7-Day Zone Forecast</button>
+    </div>
+    <div class="sb-grp">
       <div class="sb-lbl">Consistency</div>
       <button class="sb-btn" onclick="loadTask('xcheck')">Cross-Product Check</button>
     </div>
@@ -754,7 +758,18 @@ AFD: ${f.afd}
 TAFs: ${f.tafs}
 MARINE CWF: ${f.cwf}
 WWA HEADLINES: ${f.wwas}
-OUTPUT: List all inconsistencies (timing, precip type, wind speeds, totals). Flag HIGH/MEDIUM/LOW priority. Draft corrected language for all HIGH priority issues.`
+OUTPUT: List all inconsistencies (timing, precip type, wind speeds, totals). Flag HIGH/MEDIUM/LOW priority. Draft corrected language for all HIGH priority issues.\`
+  },
+
+  zone7day: {
+    name: '7-Day Zone Forecast — All Locations',
+    fields: [
+      {id:'forecaster_notes', label:'Forecaster Notes / Overrides', type:'ta',
+        ph:'Key overrides, confidence notes — e.g. "low confidence day 5-7", "cap coast snow 3-5\"", "front timing uncertain"...'},
+      {id:'extra_guidance', label:'Additional Guidance (optional)', type:'ta',
+        ph:'Extra model text, ensemble output, or station-specific notes not already in the model panel...'},
+    ],
+    prompt: (f, live) => build7DayPrompt(f, live),
   },
 };
 
@@ -2165,6 +2180,113 @@ function formatMOSForAFD(live) {
 
 function formatMetarsForAFD(live) {
   return Object.values(live.metars||{}).map(m=>m.summary).join('\n') || 'No METARs loaded.';
+}
+
+// ─── 7-DAY ZONE FORECAST PROMPT BUILDER ─────────────────────────────────────
+function build7DayPrompt(f, live) {
+  const scenario = detectScenario(live);
+  const now      = new Date().toUTCString().slice(5,22);
+
+  // Build per-location 7-day table from NBM blocks
+  const locationRows = [];
+  const locations = [
+    'Boston','Worcester','Providence','Nantucket','Hyannis',
+    'Hartford','Fitchburg','Keene NH','Taunton','Lawrence'
+  ];
+
+  locations.forEach(name => {
+    const p = live.nbm?.[name];
+    if(!p || p.error) { locationRows.push(`${name}: NBM not loaded`); return; }
+
+    // Summarize by calendar day from 6h blocks
+    const dayMap = {};
+    (p.blocks||[]).forEach(b => {
+      // label is like "12 Mar 06Z" — extract date key
+      const dayKey = b.label.substring(0,6).trim();
+      if(!dayMap[dayKey]) dayMap[dayKey] = {temps:[], winds:[], gusts:[], pops:[], wx:new Set()};
+      const d = dayMap[dayKey];
+      if(b.tRange && b.tRange !== '—') {
+        const parts = b.tRange.replace('°F','').split('-');
+        if(parts.length===2) { d.temps.push(parseInt(parts[0])); d.temps.push(parseInt(parts[1])); }
+      }
+      const wSpd = parseInt(b.wind)||0; if(wSpd>0) d.winds.push(wSpd);
+      const gSpd = parseInt((b.gust||'').replace('G','').replace('kt',''))||0; if(gSpd>0) d.gusts.push(gSpd);
+      if(b.pop>0) d.pops.push(b.pop);
+      if(b.wx && b.wx!=='—') b.wx.split('/').forEach(w=>d.wx.add(w.trim()));
+    });
+
+    const days = Object.entries(dayMap).slice(0,7);
+    const dayStrs = days.map(([day, d]) => {
+      const tHi  = d.temps.length ? Math.max(...d.temps) : '?';
+      const tLo  = d.temps.length ? Math.min(...d.temps) : '?';
+      const wMax = d.winds.length ? Math.max(...d.winds) : 0;
+      const gMax = d.gusts.length ? Math.max(...d.gusts) : 0;
+      const pop  = d.pops.length  ? Math.max(...d.pops)  : 0;
+      const wx   = [...d.wx].slice(0,2).join('/') || 'NA';
+      return `${day}: Hi ${tHi}°/Lo ${tLo}°F Wind ${wMax}kt${gMax>wMax?' G'+gMax+'kt':''} PoP ${pop}% ${wx}`;
+    });
+
+    const flags = [p.hasSnow?'SNOW':'',p.hasFZRA?'FZRA':'',p.hasTSTM?'TSTM':'',
+                   p.lljDetected?'S-LLJ':''].filter(Boolean).join(',');
+    locationRows.push(
+      `\n=== ${name.toUpperCase()} === QPF:${p.totalQPF}" Snow:${p.totalSnow}" MaxGust:${p.maxGust}kt${flags?' ['+flags+']':''}\n` +
+      dayStrs.map(s=>'  '+s).join('\n')
+    );
+  });
+
+  return `TASK: Write a 7-day text forecast for all BOX CWA locations.
+ISSUE TIME: ${now}
+SCENARIO: ${scenario.type.toUpperCase()} — ${scenario.hazards.join(', ')||'Routine'}
+
+====== NBM 7-DAY BY LOCATION ======
+${locationRows.join('\n')}
+
+====== HRRR NEXT 18H (near-term detail) ======
+${formatHRRRForAFD(live)}
+
+====== SOUNDINGS ======
+${formatSoundingsForAFD(live)}
+
+====== FRONTOGENESIS / DYNAMICS ======
+${formatFrontoForAFD(live)}
+
+====== ENSEMBLE GUIDANCE ======
+${formatEnsembleForAFD(live) || 'Not provided.'}
+
+====== ACTIVE ALERTS ======
+${live.alertSummary || 'None'}
+
+====== FORECASTER NOTES ======
+${f.forecaster_notes || 'None'}
+
+====== ADDITIONAL GUIDANCE ======
+${f.extra_guidance || 'None'}
+
+INSTRUCTIONS:
+Write a 7-day public zone forecast for ALL of the following BOX CWA locations:
+Boston, Worcester, Providence, Nantucket/Martha's Vineyard/Cape Cod, Hartford,
+Fitchburg/North-Central MA, Keene NH/Monadnock, Taunton/Southeast MA, Lawrence/Merrimack Valley
+
+FORMAT — for each location write:
+[LOCATION NAME]
+TODAY: <conditions, high temp, wind>
+TONIGHT: <conditions, low temp, wind>
+[DAY NAME]: <conditions, high, wind, precip if any>
+[DAY NAME] NIGHT: <conditions, low>
+... continue through 7 days ...
+
+RULES:
+- All temperatures, winds, and QPF must come directly from the NBM data above
+- HRRR drives today and tonight details — use it for timing and precip type
+- Flag confidence explicitly: CONFIDENCE: HIGH/MED/LOW after each location with 1-line reason
+- Apply NBM gust bias corrections:
+  * Sunny afternoon: gust floor = wind x 1.5-1.6 (deep mixed BL)
+  * Southerly LLJ detected: gust floor = 850mb wind speed at surface during mix-out
+- Apply BOX bias corrections where data supports (banding, FZRA threshold, Cape/Islands NW gust)
+- Note any significant cross-location differences (e.g. rain at coast vs snow inland)
+- Do NOT apply coastal temperature moderation
+- Keep language concise and public-forecast style (no jargon)
+- End with a brief HAZARD SUMMARY listing any watch/warning/advisory criteria met`;
 }
 
 // ─── AFD PROMPT BUILDER ───────────────────────────────────────────────────────
