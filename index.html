@@ -744,19 +744,25 @@ async function fetchMetar(sta) {
     const wx  = (p.presentWeather||[]).map(w=>w.rawString).filter(Boolean).join(' ');
     const tf  = tc!=null ? Math.round(tc*9/5+32) : '?';
     const df  = dc!=null ? Math.round(dc*9/5+32) : '?';
-    // Always parse wind from raw METAR -- API fields are unreliable
+    // Parse wind from raw METAR -- API fields are unreliable
+    // Strategy: find the wind group by looking for KT in the METAR body (before RMK)
     let wdir = 'VRB', wspd = 0, wgst = 0;
     if(p.rawMessage) {
-      const wndMatch = p.rawMessage.match(/(\d{3}|VRB)(\d{2,3})(G(\d{2,3}))?KT/);
+      // Strip remarks section so RMK tokens don't interfere
+      const body = p.rawMessage.split(' RMK')[0];
+      // Match: 3-digit direction OR VRB, then 2-3 digit speed, optional gust, then KT
+      const wndMatch = body.match(/\b(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT\b/);
       if(wndMatch) {
         wdir = wndMatch[1];
         wspd = parseInt(wndMatch[2]) || 0;
-        wgst = wndMatch[4] ? parseInt(wndMatch[4]) : 0;
+        wgst = wndMatch[3] ? parseInt(wndMatch[3]) : 0;
       }
+      // Handle calm winds: 00000KT
+      if(body.match(/\b00000KT\b/)) { wdir = '000'; wspd = 0; wgst = 0; }
     }
-    // Fall back to API fields only if raw parse gave nothing
-    if(wspd === 0 && ws != null) wspd = Math.round(ws/1.852);
-    if(wgst === 0 && wg != null) wgst = Math.round(wg/1.852);
+    // If raw parse still gives 0 sustained, fall back to API (km/h -> kt)
+    if(wspd === 0 && ws != null && ws > 0) wspd = Math.round(ws/1.852);
+    if(wgst === 0 && wg != null && wg > 0) wgst = Math.round(wg/1.852);
     if(wdir === 'VRB' && wd != null && wd > 0) wdir = String(Math.round(wd)).padStart(3,'0');
     const vsm  = vi!=null ? Math.round(vi/160934)/10 : '?';
     const skyStr = sky.map(l=>{ const b=l.base?.value; return b!=null?`${l.amount}${String(Math.round(b*3.28084/100)).padStart(3,'0')}`:''; }).filter(Boolean).join(' ') || 'SKC';
@@ -1840,4 +1846,5 @@ setTimeout(()=>{
 </body>
 </html>
 Done
-There's the full code — select all, copy, paste into GitHub. Should now correctly show
+There's the full code — select all and paste into GitHub!
+
