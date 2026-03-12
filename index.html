@@ -1255,11 +1255,20 @@ async function fetchNDFDPoint(name, lat, lon) {
 
     const qpfVals = filterTo48h((props.quantitativePrecipitation||{}).values||[]);
     const totalQPFmm = qpfVals.reduce((s,v)=>s+(v.value||0),0);
-    const totalQPF = Math.min(10, totalQPFmm * 0.0393701); // mm→in
+    // QPF uom is wmoUnit:mm — convert mm→in
+    const totalQPF = Math.min(10, totalQPFmm * 0.0393701);
 
     const snowVals = filterTo48h((props.snowfallAmount||{}).values||[]);
-    const totalSnowMm = snowVals.reduce((s,v)=>s+(v.value||0),0);
-    const totalSnow = Math.min(24, totalSnowMm * 0.0393701); // mm→in, cap 24"
+    const totalSnowRaw = snowVals.reduce((s,v)=>s+(v.value||0),0);
+    // NWS snowfallAmount uom is wmoUnit:m (METERS of snow, not mm!)
+    // Check uom to pick correct conversion
+    const snowUom = (props.snowfallAmount||{}).uom || '';
+    const snowInches = snowUom.includes('mm')
+      ? totalSnowRaw * 0.0393701          // mm → in
+      : snowUom.includes('[in_i]')
+        ? totalSnowRaw                     // already inches
+        : totalSnowRaw * 39.3701;          // meters → in (default: wmoUnit:m)
+    const totalSnow = Math.min(24, snowInches);
 
     // PoP — also filtered to 48h
     const maxPoP = popVals48.reduce((mx,v)=>Math.max(mx,v.value||0),0);
@@ -1281,7 +1290,7 @@ async function fetchNDFDPoint(name, lat, lon) {
     const minTemp = (props.minTemperature||{}).values||[];
     const minTF = minTemp.length ? minTemp[0].value*9/5+32 : null;
 
-    return { name, lat, lon, blocks, totalQPF: totalQPF.toFixed(2), totalSnow: totalSnow.toFixed(1), maxPoP, maxGust: Math.round(maxGust), minTF, gridId, gridX, gridY, raw: props };
+    return { name, lat, lon, blocks, totalQPF: totalQPF.toFixed(2), totalSnow: totalSnow.toFixed(1), snowUom, maxPoP, maxGust: Math.round(maxGust), minTF, gridId, gridX, gridY, raw: props };
   } catch(e) {
     return { name, lat, lon, blocks:[], totalQPF:'?', totalSnow:'?', maxPoP:0, maxGust:0, error:e.message };
   }
@@ -1781,7 +1790,7 @@ function renderNDFDPanel() {
       const qpfSuspect = parseFloat(p.totalQPF) > 5;
       const snowSuspect = parseFloat(p.totalSnow) > 24;
       html += `<div class="model-row"><span class="model-lbl">QPF 48h</span><span class="model-val ${qpfSuspect?'hi':parseFloat(p.totalQPF)>1?'ok':''}">${p.totalQPF}"${qpfSuspect?' ⚠':''}</span></div>
-        <div class="model-row"><span class="model-lbl">Snow 48h</span><span class="model-val ${snowSuspect?'hi':parseFloat(p.totalSnow)>2?'ok':''}">${p.totalSnow}"${snowSuspect?' ⚠':''}</span></div>
+        <div class="model-row"><span class="model-lbl">Snow 48h</span><span class="model-val ${snowSuspect?'hi':parseFloat(p.totalSnow)>2?'ok':''}">${p.totalSnow}"${snowSuspect?' ⚠':''} <span style="color:var(--muted);font-size:8px">(${p.snowUom||'?'})</span></span></div>
         <div class="model-row"><span class="model-lbl">Max PoP</span><span class="model-val ${p.maxPoP>70?'hi':p.maxPoP>40?'ok':''}">${p.maxPoP}%</span></div>
         <div class="model-row"><span class="model-lbl">Max Gust</span><span class="model-val ${p.maxGust>35?'hi':p.maxGust>25?'ok':''}">${p.maxGust}kt</span></div>`;
       p.blocks.slice(0,4).forEach(b => {
