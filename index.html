@@ -547,10 +547,7 @@ CRITICAL BOX-SPECIFIC BIAS CORRECTIONS — ALWAYS APPLY:
 3. CAPE/ISLANDS NW GUST UNDERFORECAST
    GFS/NAM underforecast NW gusts at KACK/KMVY by 5-10 kt in post-frontal cold advection. Apply to TAFs, marine CWF, public forecasts for Barnstable, Dukes, Nantucket.
 
-4. COASTAL TEMPERATURE MODERATION
-   Coastal obs run 3-5F above model-predicted values. Adjust Boston metro, Cape Cod, and coastal zone forecasts.
-
-5. MARINE SEA HEIGHT UNDERFORECAST
+4. MARINE SEA HEIGHT UNDERFORECAST
    WaveWatch III/ECMWF underestimate SWH 1-3 ft during rapid deepening (>24 mb/24hr). Add 2-3 ft to model output for offshore ANZ zones.
 
 6. FZRA TO SLEET COLD LAYER THRESHOLD (BOX-specific)
@@ -1214,12 +1211,12 @@ async function fetchNDFDPoint(name, lat, lon) {
 
     // Extract next 48h of hourly data
     const now = new Date();
-    const next48 = periods.filter(p => new Date(p.startTime) < new Date(now.getTime() + 48*3600000)).slice(0,48);
+    const next168 = periods.filter(p => new Date(p.startTime) < new Date(now.getTime() + 168*3600000)).slice(0,168);
 
     // Summarize by 6h blocks
     const blocks = [];
-    for(let i=0;i<48;i+=6){
-      const chunk = next48.slice(i,i+6);
+    for(let i=0;i<168;i+=6){
+      const chunk = next168.slice(i,i+6);
       if(!chunk.length) break;
       const t0 = new Date(chunk[0].startTime);
       const label = t0.toUTCString().slice(5,11)+' '+String(t0.getUTCHours()).padStart(2,'0')+'Z';
@@ -1242,31 +1239,29 @@ async function fetchNDFDPoint(name, lat, lon) {
       });
     }
 
-    // QPF/Snow/PoP from gridded properties
+    // QPF/Snow/PoP from gridded properties — 7 days (168h)
     // NWS API: quantitativePrecipitation in wmoUnit:mm, snowfallAmount in wmoUnit:mm
-    // Values are totals per interval (not rates) — sum directly, convert mm->in
-    // Use first 12 records only (covers ~48-72h at PT6H spacing, well within event window)
-    const qpfVals  = ((props.quantitativePrecipitation||{}).values||[]).slice(0,12);
-    const totalQPF = Math.min(10, qpfVals.reduce((s,v)=>s+(v.value||0),0) * 0.0393701);
+    // At PT6H spacing, 28 records = 168h. Use 56 to be safe for any PT3H grids.
+    const qpfVals  = ((props.quantitativePrecipitation||{}).values||[]).slice(0,56);
+    const totalQPF = Math.min(25, qpfVals.reduce((s,v)=>s+(v.value||0),0) * 0.0393701);
 
-    const snowVals = ((props.snowfallAmount||{}).values||[]).slice(0,12);
+    const snowVals = ((props.snowfallAmount||{}).values||[]).slice(0,56);
     const snowUom  = (props.snowfallAmount||{}).uom || '';
     const snowRaw  = snowVals.reduce((s,v)=>s+(v.value||0),0);
-    // Handle both mm and m units defensively
-    const totalSnow = Math.min(24, snowUom.includes('[in_i]')
+    const totalSnow = Math.min(48, snowUom.includes('[in_i]')
       ? snowRaw
-      : snowRaw * 0.0393701);  // mm→in (if somehow m, result will be tiny — safe)
+      : snowRaw * 0.0393701);  // mm→in
 
-    const popVals = ((props.probabilityOfPrecipitation||{}).values||[]).slice(0,12);
+    const popVals = ((props.probabilityOfPrecipitation||{}).values||[]).slice(0,56);
     const maxPoP  = popVals.reduce((mx,v)=>Math.max(mx,v.value||0),0);
 
     // Max wind gust — derive from windSpeed in hourly periods (reliable mph strings)
     // windGust field is often null in periods; windSpeed is always populated
     // Use windSpeed mph→kt, then apply 1.4x gust factor as proxy (standard met practice)
-    const periodSpeeds = periods.slice(0,48).map(p=>Math.round((parseInt(p.windSpeed)||0)*0.868976)); // mph→kt
+    const periodSpeeds = periods.slice(0,168).map(p=>Math.round((parseInt(p.windSpeed)||0)*0.868976)); // mph→kt
     const maxSpeed = periodSpeeds.length ? Math.max(...periodSpeeds) : 0;
     // Also try period windGust strings where non-null
-    const periodGustRaw = periods.slice(0,48).map(p=>p.windGust ? Math.round(parseInt(p.windGust)*0.868976) : 0);
+    const periodGustRaw = periods.slice(0,168).map(p=>p.windGust ? Math.round(parseInt(p.windGust)*0.868976) : 0);
     const maxGustFromPeriods = Math.max(...periodGustRaw);
     // Use actual gust if reasonable (< 80kt), else use speed * 1.4, cap at 80kt
     const maxGust = Math.min(80, maxGustFromPeriods > 5 && maxGustFromPeriods < 80
@@ -1412,7 +1407,7 @@ async function fetchNBMPoint(name, lat, lon) {
 
     // QPF total — filter to next 24h by validTime (not slice — each record may be PT6H)
     const now24 = new Date();
-    const cut24h = new Date(now24.getTime() + 24*3600000);
+    const cut24h = new Date(now24.getTime() + 168*3600000); // 7 days
     const filter24 = (vals) => vals.filter(v => {
       if(!v.validTime) return false;
       return new Date(v.validTime.split('/')[0]) < cut24h;
@@ -1674,7 +1669,7 @@ function buildModelSummary() {
   const hya = liveData.ndfd['Hyannis'];
 
   if(bos || wor) {
-    lines.push('--- NDFD QPF / SNOWFALL (next 48h) ---');
+    lines.push('--- NDFD QPF / SNOWFALL (next 7 days) ---');
     Object.values(liveData.ndfd).forEach(p => {
       if(!p.error) lines.push(`${p.name.padEnd(12)}: QPF ${p.totalQPF}" | Snow ${p.totalSnow}" | MaxPoP ${p.maxPoP}% | MaxGust ${p.maxGust}kt`);
     });
@@ -2012,7 +2007,7 @@ function formatNDFDForAFD(live) {
   const lines = [];
 
   // Cross-BOX QPF/snow table
-  lines.push('NDFD QPF + SNOWFALL (next 48h) — RAW VALUES FROM API:');
+  lines.push('NDFD QPF + SNOWFALL (next 7 days) — RAW VALUES FROM API:');
   points.filter(p=>!p.error).forEach(p => {
     lines.push(`  ${p.name.padEnd(14)}: QPF=${p.totalQPF}"  Snow=${p.totalSnow}"  MaxPoP=${p.maxPoP}%  MaxGust=${p.maxGust}kt`);
     // Flag if values look suspicious
@@ -2206,6 +2201,7 @@ If NDFD data IS present, follow these rules strictly:
     * Rain/snow line: ONLY if NDFD shows precip AND thermal profile supports mixed precip
     * Cape/Islands NW gust: ONLY if NDFD winds are NW and > 20kt
     * Marine SWH: ONLY if deepening rate provided and > 20mb/24hr
+    * DO NOT apply coastal temperature moderation — high-res models handle this
 - After each section, add one-line CONFIDENCE rating
 - End each section with &&
 - Flag every BOX bias applied with NOTE: line including the NDFD base value you started from`;
