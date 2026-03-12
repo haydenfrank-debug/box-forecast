@@ -745,8 +745,22 @@ async function fetchMetar(sta) {
     const tf  = tc!=null ? Math.round(tc*9/5+32) : '?';
     const df  = dc!=null ? Math.round(dc*9/5+32) : '?';
     const wdir = wd!=null ? String(Math.round(wd)).padStart(3,'0') : 'VRB';
-    const wspd = ws!=null ? Math.round(ws/1.852) : 0;
-    const wgst = wg!=null ? Math.round(wg/1.852) : 0;
+    // NWS API returns km/h — convert to knots. Fall back to parsing raw METAR if value is 0/null
+    let wspd = ws!=null ? Math.round(ws/1.852) : 0;
+    let wgst = wg!=null ? Math.round(wg/1.852) : 0;
+    // If API gives 0 wind but raw METAR has data, parse raw METAR directly
+    if(wspd === 0 && p.rawMessage) {
+      const wndMatch = p.rawMessage.match(/(\d{3}|VRB)(\d{2,3})(G(\d{2,3}))?KT/);
+      if(wndMatch) {
+        wspd = parseInt(wndMatch[2]) || 0;
+        wgst = wndMatch[4] ? parseInt(wndMatch[4]) : 0;
+      }
+    }
+    // Also parse gust from raw if API gust is 0 but raw has one
+    if(wgst === 0 && p.rawMessage) {
+      const gstMatch = p.rawMessage.match(/G(\d{2,3})KT/);
+      if(gstMatch) wgst = parseInt(gstMatch[1]) || 0;
+    }
     const vsm  = vi!=null ? Math.round(vi/160934)/10 : '?';
     const skyStr = sky.map(l=>{ const b=l.base?.value; return b!=null?`${l.amount}${String(Math.round(b*3.28084/100)).padStart(3,'0')}`:''; }).filter(Boolean).join(' ') || 'SKC';
     const windStr = `${wdir}/${wspd}KT${wgst?'G'+wgst+'KT':''}`;
@@ -1829,8 +1843,11 @@ setTimeout(()=>{
 </body>
 </html>
 Done
-Select all the code above from <!DOCTYPE html> all the way down to </html> and copy it. Then:
+There it is — everything from <!DOCTYPE html> to </html>. Select all, copy, paste into GitHub.
 
-Go to github.com/haydenfrank-debug/box-forecast
-Click Index.html
-Click the pencil icon
+
+
+Want to be notified when Claude responds?
+
+
+
