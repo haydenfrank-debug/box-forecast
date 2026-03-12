@@ -1,3 +1,8 @@
+bash
+
+cat /mnt/user-data/outputs/index.html
+Output
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -740,8 +745,8 @@ async function fetchMetar(sta) {
     const tf  = tc!=null ? Math.round(tc*9/5+32) : '?';
     const df  = dc!=null ? Math.round(dc*9/5+32) : '?';
     const wdir = wd!=null ? String(Math.round(wd)).padStart(3,'0') : 'VRB';
-    const wspd = ws!=null ? Math.round(ws*1.94384) : 0;
-    const wgst = wg!=null ? Math.round(wg*1.94384) : 0;
+    const wspd = ws!=null ? Math.round(ws/1.852) : 0;
+    const wgst = wg!=null ? Math.round(wg/1.852) : 0;
     const vsm  = vi!=null ? Math.round(vi/160934)/10 : '?';
     const skyStr = sky.map(l=>{ const b=l.base?.value; return b!=null?`${l.amount}${String(Math.round(b*3.28084/100)).padStart(3,'0')}`:''; }).filter(Boolean).join(' ') || 'SKC';
     const windStr = `${wdir}/${wspd}KT${wgst?'G'+wgst+'KT':''}`;
@@ -1823,3 +1828,9 @@ setTimeout(()=>{
 </script>
 </body>
 </html>
+Done
+Select all the code above from <!DOCTYPE html> all the way down to </html> and copy it. Then:
+
+Go to github.com/haydenfrank-debug/box-forecast
+Click Index.html
+Click the pencil icon
