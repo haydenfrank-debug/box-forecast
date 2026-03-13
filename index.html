@@ -984,6 +984,8 @@ const STATION_NAMES = {KBOS:'Boston Logan',KORH:'Worcester',KPVD:'Providence',KB
 
 const BOX_SYSTEM = `You are an AI forecast assistant for NWS Weather Forecast Office Boston (WFO BOX), helping operational meteorologists draft and quality-check forecast products including AFDs, TAFs, marine CWFs, and WWA decisions.
 
+IMPORTANT: Always draft the requested product using whatever data is provided. NEVER refuse, warn, or ask the user to load more data — that is the user's responsibility. Zero QPF or zero snow in the guidance simply means no precipitation is forecast. Draft the product with the available data and note gaps briefly at the end if relevant.
+
 CRITICAL BOX-SPECIFIC BIAS CORRECTIONS — ALWAYS APPLY:
 
 1. BANDED SNOW UNDERFORECASTING
@@ -2242,21 +2244,25 @@ async function fetchGEFSPoint(name, lat, lon) {
       const qpfVals = memberVals(precipKeys, idxs).sort((a,b)=>a-b);
       // Snow: daily total per member
       const snowVals = memberVals(snowKeys, idxs).sort((a,b)=>a-b);
-      // Wind gust: daily max per member
-      const gustVals = tempKeys.map((_, mi) => {
+      // Wind gust: daily max per member (unsorted for member-index exceedance)
+      const windKeys2 = Object.keys(hr).filter(k => k.startsWith('windspeed_10m'));
+      const gustValsRaw = tempKeys.map((_, mi) => {
         const k = gustKeys[mi];
         if(!k) return null;
         const vals = idxs.map(i => hr[k]?.[i]).filter(v => v != null);
         return vals.length ? Math.max(...vals) : null;
-      }).filter(v => v !== null).sort((a,b)=>a-b);
-      // Wind speed: daily max per member
-      const windKeys2 = Object.keys(hr).filter(k => k.startsWith('windspeed_10m'));
-      const windVals = tempKeys.map((_, mi) => {
+      }).filter(v => v !== null);
+      const windValsRaw = tempKeys.map((_, mi) => {
         const k = windKeys2[mi];
         if(!k) return null;
         const vals = idxs.map(i => hr[k]?.[i]).filter(v => v != null);
         return vals.length ? Math.max(...vals) : null;
-      }).filter(v => v !== null).sort((a,b)=>a-b);
+      }).filter(v => v !== null);
+      // Unsorted QPF/snow for member-index exceedance
+      const qpfValsRaw  = memberVals(precipKeys, idxs);
+      const snowValsRaw = memberVals(snowKeys,   idxs);
+      const gustVals = [...gustValsRaw].sort((a,b)=>a-b);
+      const windVals = [...windValsRaw].sort((a,b)=>a-b);
 
       function stats(sorted) {
         if(!sorted.length) return {mean:0,p10:0,p25:0,p75:0,p90:0,det:0};
@@ -2279,10 +2285,10 @@ async function fetchGEFSPoint(name, lat, lon) {
         _memberVals: {
           tHi:  tMaxVals,
           tLo:  tMinVals,
-          qpf:  qpfVals,
-          snow: snowVals,
-          gust: gustVals,
-          wind: windVals,
+          qpf:  qpfValsRaw,
+          snow: snowValsRaw,
+          gust: gustValsRaw,
+          wind: windValsRaw,
         },
       });
     });
@@ -2316,32 +2322,24 @@ async function fetchGEFSPoint(name, lat, lon) {
     const confidence  = spreadRatio < 0.3 ? 'HIGH' : spreadRatio < 0.7 ? 'MEDIUM' : 'LOW';
 
     // Exceedance probabilities over 7-day window (% of members exceeding threshold)
-    const nM = tempKeys.length;
     function excPct(vals, thresh) {
       if(!vals || !vals.length) return 0;
       return Math.round(100 * vals.filter(v=>v>=thresh).length / vals.length);
     }
-    // Per-member 7-day totals
-    const memberQpf7   = tempKeys.map(mk => {
-      const key = mk.replace('temperature_2m_member','');
-      const qpfKey = `precipitation_member${key}`;
-      const vals = raw[qpfKey] || [];
-      return vals.slice(0, Math.min(168, vals.length)).reduce((s,v)=>s+(v||0),0) * 0.0393701;
-    });
-    const memberSnow7  = tempKeys.map(mk => {
-      const key = mk.replace('temperature_2m_member','');
-      const snowKey = `snowfall_member${key}`;
-      const vals = raw[snowKey] || [];
-      return vals.slice(0, Math.min(168, vals.length)).reduce((s,v)=>s+(v||0),0) * 0.393701;
-    });
-    // Per-member max daily gust
-    const memberMaxGust = dailyStats[0] ? tempKeys.map((mk,mi) => {
-      return Math.max(...dailyStats.slice(0,7).map(d => d._memberGusts ? (d._memberGusts[mi]||0) : 0));
-    }) : [];
-    // Wind
-    const memberMaxWind = dailyStats[0] ? tempKeys.map((mk,mi) => {
-      return Math.max(...dailyStats.slice(0,7).map(d => d._memberWinds ? (d._memberWinds[mi]||0) : 0));
-    }) : [];
+    // Per-member 7-day totals — sum _memberVals.qpf and .snow across first 7 days
+    // (already in correct units: qpf=inches, snow=inches via memberVals())
+    const memberQpf7  = tempKeys.map((_, mi) =>
+      dailyStats.slice(0,7).reduce((s,d) => s + (d._memberVals?.qpf?.[mi] || 0), 0)
+    );
+    const memberSnow7 = tempKeys.map((_, mi) =>
+      dailyStats.slice(0,7).reduce((s,d) => s + (d._memberVals?.snow?.[mi] || 0), 0)
+    );
+    const memberMaxGust = tempKeys.map((_, mi) =>
+      Math.max(...dailyStats.slice(0,7).map(d => d._memberVals?.gust?.[mi] || 0))
+    );
+    const memberMaxWind = tempKeys.map((_, mi) =>
+      Math.max(...dailyStats.slice(0,7).map(d => d._memberVals?.wind?.[mi] || 0))
+    );
 
     const exceedance = {
       qpf1:   excPct(memberQpf7,   1.0),
