@@ -382,7 +382,8 @@ select.fi option { background: var(--panel2); }
       <input class="api-key-input" type="password" id="api-key-display" placeholder="sk-ant-... (paste here)" autocomplete="off" oninput="onKeyInput()">
     </div>
     <button class="hdr-btn btn-green" onclick="fetchAllLive()" id="refresh-btn">⟳ Refresh Live Data</button>
-    <span id="live-status" style="font-family:var(--mono);font-size:10px;color:var(--muted)"><span class="dot dot-warn"></span>Not loaded</span>
+    <span id="live-status" style="font-family:var(--mono);font-size:10px;color:var(--muted)"><span class="dot dot-warn"></span>Loading...</span>
+    <span id="refresh-countdown" style="font-family:var(--mono);font-size:9px;color:var(--muted);opacity:.6"></span>
     <span id="clock"></span>
   </div>
 </header>
@@ -439,7 +440,7 @@ select.fi option { background: var(--panel2); }
       <div class="task-name" id="task-name">AFD Synopsis + Discussion</div>
       <div class="bar-btns">
         <button class="hdr-btn btn-green" onclick="autoFill()">⟳ Auto-Fill Live Data</button>
-        <button class="hdr-btn" style="border-color:rgba(0,212,255,.3);color:var(--accent);background:rgba(0,212,255,.07)" onclick="fetchModelData()" id="model-load-btn">📡 Load Model Guidance</button>
+        <button class="hdr-btn" style="border-color:rgba(0,212,255,.3);color:var(--accent);background:rgba(0,212,255,.07)" onclick="fetchModelData()" id="model-load-btn">📡 Reload Model Guidance</button>
         <button class="hdr-btn btn-accent" id="save-drive-btn" style="display:none" onclick="saveToDrive()">⬆ Drive</button>
       </div>
     </div>
@@ -463,7 +464,7 @@ select.fi option { background: var(--panel2); }
         </div>
         <div class="pane-body">
           <div class="out-block" id="out-block">
-<span class="out-ph">AFD output will appear here.<br><br><strong style="color:var(--alert)">⚠ You must load model data before running or the AI will hallucinate values.</strong><br><br>1. Click <strong style="color:var(--accent2)">⟳ Refresh Live Data</strong> — loads METARs, current AFD, alerts<br>2. Click <strong style="color:var(--accent)">📡 Load Model Guidance</strong> — loads NDFD grids, MOS, soundings<br>3. Optionally add forecaster notes<br>4. Click <strong style="color:var(--accent)">▶ Run AI Assist</strong></span>
+<span class="out-ph">⟳ Loading all data automatically...<br><br>All observations and model guidance load on startup and refresh every 30 minutes.<br><br>Click <strong style="color:var(--accent2)">⟳ Refresh Live Data</strong> at any time to force a reload.<br>Use <strong style="color:var(--accent)">📡 Reload Model Guidance</strong> to manually re-fetch model data only.<br><br>Once loaded, select a task from the left panel and click <strong>▶ Run AI Assist</strong>.</span>
           </div>
           <div id="bias-display"></div>
           <div id="drive-result"></div>
@@ -489,45 +490,64 @@ select.fi option { background: var(--panel2); }
     <div class="rp-sec" style="padding-bottom:0">
       <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px">
         <div class="rp-lbl" style="margin:0">Model Guidance</div>
-        <button class="rp-fetch-btn" id="model-fetch-btn" onclick="fetchModelData()">⟳ Load NDFD + MOS</button>
+        <button class="rp-fetch-btn" id="model-fetch-btn" onclick="fetchModelData()">⟳ Reload Models</button>
       </div>
       <div class="model-tab-bar">
         <button class="mtab active" onclick="showMTab('nbm')">NBM</button>
         <button class="mtab" onclick="showMTab('hrrr')">HRRR/CAM</button>
-        <button class="mtab" onclick="showMTab('mos')">MOS/GFS</button>
+        <button class="mtab" onclick="showMTab('gfs')">GFS</button>
+        <button class="mtab" onclick="showMTab('gefs')">GEFS</button>
+        <button class="mtab" onclick="showMTab('mos')">MOS</button>
         <button class="mtab" onclick="showMTab('snd')">Soundings</button>
         <button class="mtab" onclick="showMTab('fronto')">Fronto/Dyn</button>
-        <button class="mtab" onclick="showMTab('ens')">Ensembles</button>
+        <button class="mtab" onclick="showMTab('ens')">Paste-In</button>
         <button class="mtab" onclick="showMTab('text')">Text Prods</button>
       </div>
       <div class="model-panel active" id="mp-nbm"><div class="model-loading">Click "Load Model Guidance" →</div></div>
       <div class="model-panel" id="mp-hrrr"><div class="model-loading">HRRR/CAM loads with model data →</div></div>
+      <div class="model-panel" id="mp-gfs"><div class="model-loading">GFS loads automatically →</div></div>
+      <div class="model-panel" id="mp-gefs"><div class="model-loading">GEFS ensemble loads automatically →</div></div>
       <div class="model-panel" id="mp-mos"><div class="model-loading">MOS + GFS text loads with model data →</div></div>
       <div class="model-panel" id="mp-snd"><div class="model-loading">Soundings load with model data →</div></div>
       <div class="model-panel" id="mp-fronto"><div class="model-loading">Frontogenesis/dynamics load with model data →</div></div>
       <div class="model-panel" id="mp-ens">
         <div style="padding:6px 0">
-          <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:.12em;margin-bottom:6px">ENSEMBLE / HIGH-RES IMPORT</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:8px;line-height:1.6">
-            HREF, RRFS, GEFS, EPS, CMC, EPSai, GEPSai require NOMADS/ECMWF access — paste guidance text below from Pivotal Weather, AWIPS, or Copernicus.
-            The AI will parse and incorporate all pasted guidance.
+          <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:.12em;margin-bottom:4px">PASTE-IN MODEL GUIDANCE</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px;line-height:1.5">
+            GFS + GEFS auto-load above. The following require NOMADS/ECMWF/AWIPS access — paste from Pivotal, AWIPS, Copernicus, or CMC Datamart. All pasted text feeds directly into AI prompts.
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
             <div>
-              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--warn);letter-spacing:.08em;margin-bottom:3px">HREF / RRFS</div>
-              <textarea id="ens-href" class="fi" style="font-size:9px;min-height:70px;font-family:var(--mono)" placeholder="Paste HREF/RRFS guidance, probability text, or key stats..."></textarea>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--warn);letter-spacing:.08em;margin-bottom:2px">HREF</div>
+              <textarea id="ens-href" class="fi" style="font-size:9px;min-height:60px;font-family:var(--mono)" placeholder="HREF probability of exceedance, QPF neighborhood probs, severe convective probs..."></textarea>
             </div>
             <div>
-              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--warn);letter-spacing:.08em;margin-bottom:3px">GEFS / EPS / CMC</div>
-              <textarea id="ens-gefs" class="fi" style="font-size:9px;min-height:70px;font-family:var(--mono)" placeholder="Paste GEFS/EPS/CMC ensemble mean, spread, or plume text..."></textarea>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--warn);letter-spacing:.08em;margin-bottom:2px">RRFS</div>
+              <textarea id="ens-rrfs" class="fi" style="font-size:9px;min-height:60px;font-family:var(--mono)" placeholder="RRFS convective/precip guidance, key QPF or wind stats..."></textarea>
             </div>
             <div>
-              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent2);letter-spacing:.08em;margin-bottom:3px">EPSai / GEPSai</div>
-              <textarea id="ens-epsai" class="fi" style="font-size:9px;min-height:70px;font-family:var(--mono)" placeholder="Paste EPSai / GEPSai AI-postprocessed ensemble output..."></textarea>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent2);letter-spacing:.08em;margin-bottom:2px">Regional Canadian (RDPS)</div>
+              <textarea id="ens-rdps" class="fi" style="font-size:9px;min-height:60px;font-family:var(--mono)" placeholder="CMC RDPS QPF, temp, wind — from Pivotal or CMC Datamart..."></textarea>
             </div>
             <div>
-              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:3px">Other / Notes</div>
-              <textarea id="ens-other" class="fi" style="font-size:9px;min-height:70px;font-family:var(--mono)" placeholder="ECMWF HRES, 3km NAM, manual spread notes, Pivotal screenshots text..."></textarea>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent2);letter-spacing:.08em;margin-bottom:2px">Global Canadian (GDPS)</div>
+              <textarea id="ens-gdps" class="fi" style="font-size:9px;min-height:60px;font-family:var(--mono)" placeholder="CMC GDPS synoptic guidance, extended range..."></textarea>
+            </div>
+            <div>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:2px">EC HRES</div>
+              <textarea id="ens-ec" class="fi" style="font-size:9px;min-height:60px;font-family:var(--mono)" placeholder="ECMWF HRES deterministic — from Pivotal or Copernicus..."></textarea>
+            </div>
+            <div>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:2px">EPS (ECMWF Ensemble)</div>
+              <textarea id="ens-eps" class="fi" style="font-size:9px;min-height:60px;font-family:var(--mono)" placeholder="EPS plumes, percentiles, spread — from Copernicus or Pivotal..."></textarea>
+            </div>
+            <div>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:2px">EPSai / GEPSai</div>
+              <textarea id="ens-epsai" class="fi" style="font-size:9px;min-height:60px;font-family:var(--mono)" placeholder="EPSai / GEPSai AI-postprocessed ensemble output..."></textarea>
+            </div>
+            <div>
+              <div style="font-family:var(--cond);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:2px">GFSai / Other</div>
+              <textarea id="ens-gfsai" class="fi" style="font-size:9px;min-height:60px;font-family:var(--mono)" placeholder="GFSai, 3km NAM, manual notes, Pivotal screenshot text..."></textarea>
             </div>
           </div>
           <button class="hdr-btn btn-green" style="margin-top:8px;font-size:9px;padding:4px 10px" onclick="saveEnsembleInput()">✓ Save to Model Context</button>
@@ -781,6 +801,8 @@ let liveData = {
   ndfdProb:{},    // NDFD probabilistic QPF/PoP
   mos:{},         // MOS MAV/MEX per station
   soundings:{},   // RUC soundings per station
+  gfs:{},         // GFS point data via open-meteo
+  gefs:{},        // GEFS ensemble mean+spread via open-meteo
   modelSummary:'',// formatted guidance block for auto-fill
   modelLoaded:false
 };
@@ -794,6 +816,45 @@ function tick() {
   document.getElementById('clock').textContent = h+':'+m+':'+s+' UTC';
 }
 setInterval(tick,1000); tick();
+
+// ─── AUTO-REFRESH ─────────────────────────────────────────────────────────────
+// Refresh obs + model data on page load and every 30 minutes
+const AUTO_REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 min
+
+function scheduleAutoRefresh() {
+  // Track when data was last fetched
+  liveData.lastAutoRefresh = null;
+
+  // Show countdown in status bar
+  function updateCountdown() {
+    const el = document.getElementById('refresh-countdown');
+    if(!el || !liveData.lastAutoRefresh) return;
+    const elapsed = Date.now() - liveData.lastAutoRefresh;
+    const remaining = Math.max(0, AUTO_REFRESH_INTERVAL_MS - elapsed);
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    el.textContent = `next refresh ${mins}:${String(secs).padStart(2,'0')}`;
+  }
+  setInterval(updateCountdown, 5000);
+
+  // Auto-refresh every 30 min
+  setInterval(() => {
+    console.log('[AutoRefresh] Triggering scheduled data refresh');
+    fetchAllLive().catch(e => console.warn('[AutoRefresh] Error:', e));
+    liveData.lastAutoRefresh = Date.now();
+  }, AUTO_REFRESH_INTERVAL_MS);
+}
+
+// Load all data on page load (after a short delay to let DOM settle)
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    console.log('[AutoRefresh] Initial data load on page ready');
+    fetchAllLive()
+      .then(() => { liveData.lastAutoRefresh = Date.now(); })
+      .catch(e => console.warn('[AutoRefresh] Initial load error:', e));
+    scheduleAutoRefresh();
+  }, 800);
+});
 
 // ─── API KEY ─────────────────────────────────────────────────────────────────
 function onKeyInput() {
@@ -943,7 +1004,10 @@ async function fetchAllLive() {
   document.getElementById('rp-updated').textContent = new Date().toUTCString().slice(17,22)+'Z';
   btn.textContent = '⟳ Refresh Live Data'; btn.disabled = false;
 
-  showToast(`Live data loaded — ${n}/10 METARs, ${alerts.length} alert(s)`, false);
+  showToast(`Live data loaded — ${n}/10 METARs, ${alerts.length} alert(s). Loading model data...`, false);
+
+  // Automatically load model guidance after obs — non-blocking
+  fetchModelData().catch(e => console.warn('Auto model fetch error:', e));
 }
 
 function setMetarStrip(state) {
@@ -1086,8 +1150,8 @@ function autoFill() {
         el.value = liveData.modelSummary;
         el.classList.add('autofilled'); filled++;
       } else {
-        el.placeholder = 'Click "📡 Load Model Guidance" first, then Auto-Fill — or paste from AWIPS/Pivotal...';
-        showToast('Click "📡 Load Model Guidance" first to auto-fill model fields', true);
+        el.placeholder = 'Click "📡 Reload Model Guidance" first, then Auto-Fill — or paste from AWIPS/Pivotal...';
+        showToast('Click "📡 Reload Model Guidance" first to auto-fill model fields', true);
       }
     }
   });
@@ -1096,7 +1160,7 @@ function autoFill() {
   if(currentTask === 'afd' || currentTask === 'afd_avn') {
     updateScenarioBanner();
     if(!liveData.modelLoaded) {
-      showToast('Load model data first: click "📡 Load Model Guidance" → then Run to generate AFD from NDFD', true);
+      showToast('Load model data first: click "📡 Reload Model Guidance" → then Run to generate AFD from NDFD', true);
       return;
     }
     document.getElementById('autofill-status').textContent = `✓ NDFD loaded — click Run to generate AFD`;
@@ -1137,7 +1201,7 @@ async function runTask() {
 
   // Warn if running AFD without model data loaded
   if((currentTask === 'afd' || currentTask === 'afd_avn') && !liveData.modelLoaded) {
-    const proceed = confirm('⚠ Model guidance not loaded!\n\nWithout NDFD data the AI may fabricate forecast values.\n\nClick OK to run anyway, or Cancel and load model guidance first (📡 Load Model Guidance).');
+    const proceed = confirm('⚠ Model guidance not loaded!\n\nWithout NDFD data the AI may fabricate forecast values.\n\nClick OK to run anyway, or Cancel and load model guidance first (📡 Reload Model Guidance).');
     if(!proceed) { btn.disabled = false; btn.textContent = '▶ Run AI Assist'; return; }
   }
 
@@ -1645,6 +1709,141 @@ async function fetchTextProducts() {
 }
 
 // ─── MAIN MODEL FETCH ─────────────────────────────────────────────────────────
+
+// ─── GFS via open-meteo ──────────────────────────────────────────────────────
+async function fetchGFSPoint(name, lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&hourly=temperature_2m,dewpoint_2m,apparent_temperature,precipitation,snowfall,` +
+    `rain,showers,weathercode,windspeed_10m,windgusts_10m,winddirection_10m,` +
+    `surface_pressure,cloudcover,visibility` +
+    `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,` +
+    `windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,weathercode` +
+    `&models=gfs_seamless&forecast_days=10&wind_speed_unit=kn` +
+    `&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=UTC`;
+  try {
+    const r   = await fetch(url);
+    const d   = await r.json();
+    const hr  = d.hourly || {};
+    const dy  = d.daily  || {};
+    const times = hr.time || [];
+
+    // Build 6-hourly blocks for display (first 7 days = 168h)
+    const blocks = [];
+    for(let i = 0; i < Math.min(168, times.length); i += 6) {
+      const slice = (arr) => (arr||[]).slice(i, i+6);
+      const t     = times[i];
+      const dt    = new Date(t+'Z');
+      const spds  = slice(hr.windspeed_10m).filter(v=>v!=null);
+      const gsts  = slice(hr.windgusts_10m).filter(v=>v!=null);
+      const temps = slice(hr.temperature_2m).filter(v=>v!=null);
+      const pcps  = slice(hr.precipitation).filter(v=>v!=null);
+      const snws  = slice(hr.snowfall).filter(v=>v!=null);
+      blocks.push({
+        label:    dt.toUTCString().slice(5,17),
+        tRange:   temps.length ? `${Math.round(Math.min(...temps))}-${Math.round(Math.max(...temps))}°F` : '—',
+        wind:     spds.length  ? `${Math.round(Math.max(...spds))}kt` : '—',
+        gust:     gsts.length  ? `G${Math.round(Math.max(...gsts))}kt` : '',
+        qpf:      pcps.length  ? pcps.reduce((a,b)=>a+b,0).toFixed(2) : '0.00',
+        snow:     snws.length  ? snws.reduce((a,b)=>a+b,0).toFixed(1)  : '0.0',
+      });
+    }
+
+    // Daily summary
+    const daily = (dy.time||[]).slice(0,7).map((d,i) => ({
+      date:    d,
+      tHi:     Math.round(dy.temperature_2m_max?.[i] ?? 0),
+      tLo:     Math.round(dy.temperature_2m_min?.[i] ?? 0),
+      qpf:     (dy.precipitation_sum?.[i] ?? 0).toFixed(2),
+      snow:    (dy.snowfall_sum?.[i]     ?? 0).toFixed(1),
+      wMax:    Math.round(dy.windspeed_10m_max?.[i]   ?? 0),
+      gMax:    Math.round(dy.windgusts_10m_max?.[i]   ?? 0),
+      wDir:    Math.round(dy.winddirection_10m_dominant?.[i] ?? 0),
+    }));
+
+    const allQpf  = (dy.precipitation_sum||[]).slice(0,7).reduce((a,b)=>a+(b||0),0);
+    const allSnow = (dy.snowfall_sum||[]).slice(0,7).reduce((a,b)=>a+(b||0),0);
+    const allGust = Math.max(...(hr.windgusts_10m||[]).slice(0,168).filter(v=>v!=null), 0);
+
+    return { name, lat, lon, blocks, daily, totalQPF: allQpf.toFixed(2), totalSnow: allSnow.toFixed(1), maxGust: Math.round(allGust) };
+  } catch(e) {
+    return { name, lat, lon, error: e.message, blocks:[], daily:[] };
+  }
+}
+
+// ─── GEFS ensemble via open-meteo ────────────────────────────────────────────
+async function fetchGEFSPoint(name, lat, lon) {
+  // open-meteo ensemble API: returns all 31 GEFS members
+  const url = `https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${lat}&longitude=${lon}` +
+    `&hourly=temperature_2m,precipitation,snowfall,windspeed_10m,windgusts_10m` +
+    `&models=gefs025&forecast_days=10&wind_speed_unit=kn` +
+    `&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=UTC`;
+  try {
+    const r  = await fetch(url);
+    const d  = await r.json();
+    const hr = d.hourly || {};
+    const times = hr.time || [];
+
+    // Identify member keys (e.g. temperature_2m_member01 ... member30 + mean)
+    const tempKeys  = Object.keys(hr).filter(k => k.startsWith('temperature_2m'));
+    const precipKeys= Object.keys(hr).filter(k => k.startsWith('precipitation'));
+    const gustKeys  = Object.keys(hr).filter(k => k.startsWith('windgusts_10m'));
+    const snowKeys  = Object.keys(hr).filter(k => k.startsWith('snowfall'));
+
+    // Compute hourly ensemble mean + spread (std dev proxy = p90-p10)
+    function ensStat(keys, idx) {
+      const vals = keys.map(k => hr[k]?.[idx]).filter(v => v != null && !isNaN(v));
+      if(!vals.length) return { mean:0, p10:0, p90:0, spread:0 };
+      vals.sort((a,b)=>a-b);
+      const mean   = vals.reduce((a,b)=>a+b,0)/vals.length;
+      const p10    = vals[Math.floor(vals.length*0.1)] ?? vals[0];
+      const p90    = vals[Math.floor(vals.length*0.9)] ?? vals[vals.length-1];
+      return { mean: +mean.toFixed(2), p10: +p10.toFixed(2), p90: +p90.toFixed(2), spread: +(p90-p10).toFixed(2) };
+    }
+
+    // 6-hourly blocks for first 7 days
+    const blocks = [];
+    for(let i = 0; i < Math.min(168, times.length); i += 6) {
+      const dt = new Date((times[i]||'')+'Z');
+      const pStats = ensStat(precipKeys, i);   // snapshot precip
+      // Accumulate 6h precip
+      let qpfMean=0, qpfSpread=0;
+      for(let j=i;j<Math.min(i+6,times.length);j++){
+        const s=ensStat(precipKeys,j);
+        qpfMean  +=s.mean; qpfSpread+=s.spread;
+      }
+      const tStat = ensStat(tempKeys,  i);
+      const gStat = ensStat(gustKeys,  i);
+      blocks.push({
+        label:   dt.toUTCString().slice(5,17),
+        tMean:   Math.round(tStat.mean),
+        tSpread: Math.round(tStat.spread),
+        qpf:     qpfMean.toFixed(2),
+        qpfSpread: qpfSpread.toFixed(2),
+        gustMean:  Math.round(gStat.mean),
+        gustSpread:Math.round(gStat.spread),
+      });
+    }
+
+    // Overall 7-day spread signal
+    let totalQpfMean=0, totalQpfSpread=0, maxGustMean=0, maxGustSpread=0;
+    for(let i=0;i<Math.min(168,times.length);i++){
+      const q=ensStat(precipKeys,i); totalQpfMean+=q.mean; totalQpfSpread=Math.max(totalQpfSpread,q.spread);
+      const g=ensStat(gustKeys,i);
+      if(g.mean>maxGustMean){maxGustMean=g.mean;maxGustSpread=g.spread;}
+    }
+
+    // Confidence: low spread = high confidence
+    const spreadRatio = totalQpfSpread / Math.max(0.01, totalQpfMean);
+    const confidence  = spreadRatio < 0.3 ? 'HIGH' : spreadRatio < 0.7 ? 'MEDIUM' : 'LOW';
+
+    return { name, lat, lon, blocks, totalQPF: totalQpfMean.toFixed(2), totalQpfSpread: totalQpfSpread.toFixed(2),
+             maxGustMean: Math.round(maxGustMean), maxGustSpread: Math.round(maxGustSpread),
+             confidence, nMembers: tempKeys.length };
+  } catch(e) {
+    return { name, lat, lon, error: e.message, blocks:[], confidence:'UNKNOWN' };
+  }
+}
+
 async function fetchModelData() {
   const btn  = document.getElementById('model-fetch-btn');
   const btn2 = document.getElementById('model-load-btn');
@@ -1663,19 +1862,30 @@ async function fetchModelData() {
     const sndPromises   = ['KBOS','KACK','KORH'].map(fetchSounding);
     const frontoPromise = fetchFrontogenesis(BOX_POINTS.Boston.lat, BOX_POINTS.Boston.lon, 'Boston');
     const textPromise   = fetchTextProducts();
+    // GFS + GEFS: key BOX points via open-meteo (free, CORS-enabled)
+    const GFS_POINTS = ['Boston','Worcester','Providence','Nantucket','Hartford','Fitchburg'];
+    const gfsPromises  = GFS_POINTS.map(n => fetchGFSPoint(n,  BOX_POINTS[n].lat, BOX_POINTS[n].lon));
+    const gefsPromises = GFS_POINTS.map(n => fetchGEFSPoint(n, BOX_POINTS[n].lat, BOX_POINTS[n].lon));
 
-    const [nbmResults, hrrrResults, mosResults, sndResults, frontoResult, textProducts] = await Promise.all([
+    const [nbmResults, hrrrResults, mosResults, sndResults, frontoResult, textProducts,
+           gfsResults, gefsResults] = await Promise.all([
       Promise.all(nbmPromises),
       hrrrPromise,
       Promise.all(mosPromises),
       Promise.all(sndPromises),
       frontoPromise,
       textPromise,
+      Promise.all(gfsPromises),
+      Promise.all(gefsPromises),
     ]);
 
     // Store
     liveData.nbm = {};
     nbmResults.forEach(r => {liveData.nbm[r.name] = r;});
+    liveData.gfs = {};
+    gfsResults.forEach(r => { liveData.gfs[r.name] = r; });
+    liveData.gefs = {};
+    gefsResults.forEach(r => { liveData.gefs[r.name] = r; });
     liveData.hrrr = hrrrResults;
     liveData.mos  = {};
     mosResults.forEach(r => {liveData.mos[r.station] = r;});
@@ -1689,6 +1899,8 @@ async function fetchModelData() {
 
     renderNBMPanel();
     renderHRRRPanel();
+    renderGFSPanel();
+    renderGEFSPanel();
     renderMOSPanel();
     renderSoundingPanel();
     renderFrontoPanel();
@@ -1709,10 +1921,117 @@ async function fetchModelData() {
   }
 
   if(btn)  {btn.textContent  = '⟳ Refresh'; btn.disabled  = false;}
-  if(btn2) {btn2.textContent = '📡 Load Model Guidance'; btn2.disabled = false;}
+  if(btn2) {btn2.textContent = '📡 Reload Model Guidance'; btn2.disabled = false;}
 }
 
 // ─── MODEL SUMMARY FOR AUTO-FILL ─────────────────────────────────────────────
+
+// ─── GFS PANEL RENDERER ──────────────────────────────────────────────────────
+function renderGFSPanel() {
+  const pts = liveData.gfs || {};
+  const names = Object.keys(pts);
+  if(!names.length) {
+    document.getElementById('mp-gfs').innerHTML = '<div class="model-loading">GFS not loaded</div>';
+    return;
+  }
+  let html = '<div style="font-family:var(--cond);font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:.1em">GFS via open-meteo · 0.25° · 10-day</div>';
+  names.forEach(name => {
+    const p = pts[name];
+    if(p.error) {
+      html += `<div class="nbm-point-hdr" style="color:var(--alert)">${name}: ${p.error}</div>`;
+      return;
+    }
+    html += `<div class="nbm-point-hdr">${name} — QPF:${p.totalQPF}" Snow:${p.totalSnow}" MaxGust:${p.maxGust}kt</div>`;
+    html += '<div class="nbm-blocks">';
+    p.blocks.forEach(b => {
+      html += `<div class="nbm-block">
+        <div class="nb-lbl">${b.label}</div>
+        <div class="nb-row"><span class="nb-k">T</span><span class="nb-v">${b.tRange}</span></div>
+        <div class="nb-row"><span class="nb-k">Wnd</span><span class="nb-v">${b.wind}${b.gust}</span></div>
+        <div class="nb-row"><span class="nb-k">QPF</span><span class="nb-v">${b.qpf}"</span></div>
+        <div class="nb-row"><span class="nb-k">Snow</span><span class="nb-v">${b.snow}"</span></div>
+      </div>`;
+    });
+    html += '</div>';
+    // Daily table
+    if(p.daily?.length) {
+      html += '<table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:9px;margin:4px 0 8px">';
+      html += '<tr style="color:var(--muted)"><th style="text-align:left">Date</th><th>Hi/Lo</th><th>QPF</th><th>Snow</th><th>MaxWnd</th><th>MaxGust</th></tr>';
+      p.daily.forEach(d => {
+        html += `<tr style="border-top:1px solid rgba(255,255,255,.05)">
+          <td style="color:var(--accent2)">${d.date}</td>
+          <td style="text-align:center">${d.tHi}/${d.tLo}°F</td>
+          <td style="text-align:center">${d.qpf}"</td>
+          <td style="text-align:center">${d.snow}"</td>
+          <td style="text-align:center">${d.wMax}kt</td>
+          <td style="text-align:center">${d.gMax}kt</td>
+        </tr>`;
+      });
+      html += '</table>';
+    }
+  });
+  document.getElementById('mp-gfs').innerHTML = html;
+}
+
+// ─── GEFS PANEL RENDERER ─────────────────────────────────────────────────────
+function renderGEFSPanel() {
+  const pts = liveData.gefs || {};
+  const names = Object.keys(pts);
+  if(!names.length) {
+    document.getElementById('mp-gefs').innerHTML = '<div class="model-loading">GEFS not loaded</div>';
+    return;
+  }
+  let html = '<div style="font-family:var(--cond);font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:.1em">GEFS 31-member ensemble via open-meteo · mean ± spread</div>';
+  names.forEach(name => {
+    const p = pts[name];
+    if(p.error) {
+      html += `<div class="nbm-point-hdr" style="color:var(--alert)">${name}: ${p.error}</div>`;
+      return;
+    }
+    const confColor = p.confidence==='HIGH'?'var(--green)':p.confidence==='MEDIUM'?'var(--warn)':'var(--alert)';
+    html += `<div class="nbm-point-hdr">${name} — QPF:${p.totalQPF}"±${p.totalQpfSpread}" MaxGust:${p.maxGustMean}±${p.maxGustSpread}kt <span style="color:${confColor};font-size:9px">[${p.confidence} CONF · ${p.nMembers} mbrs]</span></div>`;
+    html += '<div class="nbm-blocks">';
+    p.blocks.forEach(b => {
+      const spreadColor = parseFloat(b.qpfSpread) > parseFloat(b.qpf)*0.5 ? 'var(--alert)' : 'var(--muted)';
+      html += `<div class="nbm-block">
+        <div class="nb-lbl">${b.label}</div>
+        <div class="nb-row"><span class="nb-k">T</span><span class="nb-v">${b.tMean}°±${b.tSpread}°</span></div>
+        <div class="nb-row"><span class="nb-k">QPF</span><span class="nb-v">${b.qpf}"<span style="color:${spreadColor}">±${b.qpfSpread}"</span></span></div>
+        <div class="nb-row"><span class="nb-k">Gust</span><span class="nb-v">${b.gustMean}±${b.gustSpread}kt</span></div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  document.getElementById('mp-gefs').innerHTML = html;
+}
+
+// ─── FORMAT GFS FOR AI PROMPT ─────────────────────────────────────────────────
+function formatGFSForAFD(live) {
+  const pts = live.gfs || {};
+  const names = Object.keys(pts);
+  if(!names.length) return 'GFS not loaded.';
+  return names.map(name => {
+    const p = pts[name];
+    if(p.error) return `${name}: ERROR — ${p.error}`;
+    const dayStr = (p.daily||[]).map(d =>
+      `  ${d.date}: Hi ${d.tHi}\u00b0/Lo ${d.tLo}\u00b0F QPF=${d.qpf}" Snow=${d.snow}" Wind=${d.wMax}kt G${d.gMax}kt`
+    ).join('\n');
+    return `${name}: QPF=${p.totalQPF}" Snow=${p.totalSnow}" MaxGust=${p.maxGust}kt\n${dayStr}`;
+  }).join('\n\n');
+}
+
+// ─── FORMAT GEFS FOR AI PROMPT ────────────────────────────────────────────────
+function formatGEFSForAFD(live) {
+  const pts = live.gefs || {};
+  const names = Object.keys(pts);
+  if(!names.length) return 'GEFS not loaded.';
+  return names.map(name => {
+    const p = pts[name];
+    if(p.error) return `${name}: ERROR — ${p.error}`;
+    return `${name}: QPF=${p.totalQPF}"±${p.totalQpfSpread}" MaxGust=${p.maxGustMean}±${p.maxGustSpread}kt CONFIDENCE:${p.confidence} (${p.nMembers} members)`;
+  }).join('\n');
+}
+
 function buildModelSummary() {
   const lines = ['=== NBM + HRRR + MOS GUIDANCE (auto-imported) ===', ''];
 
@@ -2014,7 +2333,7 @@ function renderTextPanel() {
 }
 
 function showMTab(id) {
-  const ids = ['nbm','hrrr','mos','snd','fronto','ens','text'];
+  const ids = ['nbm','hrrr','gfs','gefs','mos','snd','fronto','ens','text'];
   document.querySelectorAll('.mtab').forEach((t,i) => t.classList.toggle('active', ids[i]===id));
   document.querySelectorAll('.model-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('mp-'+id).classList.add('active');
@@ -2023,9 +2342,13 @@ function showMTab(id) {
 function saveEnsembleInput() {
   liveData.ensemble = {
     href:  (document.getElementById('ens-href') ||{}).value  || '',
-    gefs:  (document.getElementById('ens-gefs') ||{}).value  || '',
+    rrfs:  (document.getElementById('ens-rrfs') ||{}).value  || '',
+    rdps:  (document.getElementById('ens-rdps') ||{}).value  || '',
+    gdps:  (document.getElementById('ens-gdps') ||{}).value  || '',
+    ec:    (document.getElementById('ens-ec')   ||{}).value  || '',
+    eps:   (document.getElementById('ens-eps')  ||{}).value  || '',
     epsai: (document.getElementById('ens-epsai')||{}).value  || '',
-    other: (document.getElementById('ens-other')||{}).value  || '',
+    gfsai: (document.getElementById('ens-gfsai')||{}).value  || '',
     savedAt: new Date().toUTCString(),
   };
   const hasContent = Object.values(liveData.ensemble).some(v => typeof v==='string' && v.trim().length > 0);
@@ -2037,10 +2360,14 @@ function saveEnsembleInput() {
 function formatEnsembleForAFD(live) {
   const ens = live.ensemble || {};
   const sections = [
-    {key:'href',  label:'HREF / RRFS'},
-    {key:'gefs',  label:'GEFS / EPS / CMC'},
+    {key:'href',  label:'HREF'},
+    {key:'rrfs',  label:'RRFS'},
+    {key:'rdps',  label:'Regional Canadian (RDPS)'},
+    {key:'gdps',  label:'Global Canadian (GDPS)'},
+    {key:'ec',    label:'EC HRES'},
+    {key:'eps',   label:'EPS (ECMWF Ensemble)'},
     {key:'epsai', label:'EPSai / GEPSai'},
-    {key:'other', label:'Other Guidance'},
+    {key:'gfsai', label:'GFSai / Other'},
   ];
   const filled = sections.filter(s => ens[s.key]?.trim());
   if(!filled.length) return '';
@@ -2310,6 +2637,12 @@ ${formatSoundingsForAFD(live)}
 ====== FRONTOGENESIS / DYNAMICS ======
 ${formatFrontoForAFD(live)}
 
+====== GFS POINT GUIDANCE (open-meteo 0.25°) ======
+${formatGFSForAFD(live)}
+
+====== GEFS ENSEMBLE MEAN + SPREAD (31 members) ======
+${formatGEFSForAFD(live)}
+
 ====== MOS GUIDANCE ======
 ${formatMOSForAFD(live)}
 
@@ -2354,15 +2687,22 @@ Rules:
 - Soundings drive precip-type decisions — cite 700mb temp, warm nose, dendritic zone
 - Frontogenesis data informs banding potential and timing of wind shifts
 - Do NOT apply coastal temperature moderation — high-res models are accurate
-- ENSEMBLE GUIDANCE: When HREF/RRFS/GEFS/EPS/CMC/EPSai/GEPSai data is provided above,
-  treat it as high-value input alongside NBM:
-  * HREF/RRFS: high-res ensemble — weight heavily for convective initiation, QPF placement,
-    precip type transitions, and mesoscale features NBM smooths over
-  * GEFS/EPS/CMC: global ensemble spread — use for confidence assessment and scenario range;
-    wide spread = low confidence, flag explicitly
-  * EPSai/GEPSai: AI-postprocessed ensemble — typically sharper and better calibrated than
-    raw ensemble; treat as a premium guidance source, note where it diverges from NBM
-  * Always cite which model you are drawing from (e.g. "HREF shows..." "EPS spread suggests...")
+- MODEL HIERARCHY (in order of weight):
+  AUTO-FETCHED (use directly — numbers are reliable):
+  * NBM: primary blend, use as baseline for all elements
+  * HRRR: highest weight for next 18h, especially precip type and timing
+  * GFS (above): 0.25deg deterministic, compare vs NBM for day 3-7 divergence
+  * GEFS (above): 31-member ensemble — use spread for CONFIDENCE; HIGH<30%, MED 30-70%, LOW>70% spread ratio
+  PASTE-IN (use if provided):
+  * HREF: high-res ensemble for convective QPF placement and precip type — highest res available
+  * RRFS: convection-allowing ensemble, weight heavily for mesoscale features
+  * RDPS (Regional Canadian): excellent for day 1-3 synoptic in New England, good track record
+  * GDPS (Global Canadian): extended range days 5-10, often competitive with ECMWF
+  * EC HRES: benchmark deterministic — flag explicitly when EC diverges from GFS/NBM
+  * EPS: ECMWF ensemble spread — gold standard for confidence beyond day 5
+  * EPSai/GEPSai: AI-postprocessed — treat as premium calibrated guidance, note divergence from raw models
+  * GFSai: experimental AI post-processing of GFS — note if available
+  Always cite which model you are drawing from. Flag significant inter-model spread explicitly.
 - Apply BOX bias corrections ONLY when data supports:
     * Banding: ONLY if 700mb temp in dendritic zone (-12 to -18°C) AND QPF > 0.5"
     * Rain/snow line: ONLY if thermal profile supports mixed precip
