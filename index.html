@@ -1338,14 +1338,30 @@ async function fetchNBMPoint(name, lat, lon) {
       });
     }
 
-    // Gridded accumulations — 56 records covers 7 days at PT3H
-    const slice56 = arr => (arr||[]).slice(0,56);
-    const sumMM   = arr => slice56(arr).reduce((s,v) => s + (v.value||0), 0);
+    // Gridded accumulations — time-aware 7-day sum
+    // NBM quantitativePrecipitation and snowfallAmount are at PT1H intervals,
+    // NOT PT3H or PT6H — a fixed slice(0,56) only covers ~2 days, badly undercounting QPF.
+    // Fix: sum all records within 168h (7 days) of the first validTime.
+    const slice56 = arr => (arr||[]).slice(0,56); // kept for non-precip fields (sky, wind etc)
 
-    const qpfMM   = sumMM((props.quantitativePrecipitation||{}).values);
+    function sum7dayMM(values) {
+      if(!values || !values.length) return 0;
+      // Parse the interval duration from first entry's validTime (e.g. "...T00:00:00+00:00/PT1H")
+      const firstVT = values[0].validTime || '';
+      const durMatch = firstVT.match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?$/);
+      let intervalHours = 1; // default PT1H
+      if(durMatch) {
+        intervalHours = (parseInt(durMatch[1]||0)*24) + (parseInt(durMatch[2]||0)) + (parseInt(durMatch[3]||0)/60);
+      }
+      // How many records = 168h / intervalHours
+      const maxRecords = Math.ceil(168 / Math.max(0.5, intervalHours));
+      return values.slice(0, maxRecords).reduce((s,v) => s + (v.value||0), 0);
+    }
+
+    const qpfMM    = sum7dayMM((props.quantitativePrecipitation||{}).values);
     const totalQPF = (qpfMM * 0.0393701).toFixed(2);
 
-    const snowMM   = sumMM((props.snowfallAmount||{}).values);
+    const snowMM   = sum7dayMM((props.snowfallAmount||{}).values);
     const snowUom  = (props.snowfallAmount||{}).uom || '';
     const totalSnow = (snowMM * 0.0393701).toFixed(1);  // mm→in
 
