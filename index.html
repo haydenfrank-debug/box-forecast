@@ -278,27 +278,41 @@ select.fi option { background: var(--panel2); }
 .infobar { padding: 5px 18px; border-top: 1px solid var(--border); background: var(--surface); font-family: var(--mono); font-size: 9.5px; color: var(--muted); display: flex; gap: 20px; flex-wrap: wrap; flex-shrink: 0; }
 
 /* ── FORECAST TABLE ── */
-#fcst-table-container { overflow-x: auto; overflow-y: auto; max-height: 100%; }
+#fcst-table-container { overflow-x:auto; overflow-y:auto; max-height:100%; }
 .fcst-loc-selector { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; background:var(--panel); border-bottom:1px solid var(--border2); position:sticky; top:0; z-index:2; }
 .fcst-loc-btn { font-family:var(--cond); font-size:9px; font-weight:700; letter-spacing:.06em; padding:3px 8px; border:1px solid var(--border2); border-radius:3px; background:transparent; color:var(--muted); cursor:pointer; text-transform:uppercase; transition:all .15s; }
 .fcst-loc-btn.active { background:var(--accent); color:#000; border-color:var(--accent); }
 .fcst-loc-btn:hover { color:var(--bright); border-color:var(--accent2); }
-.fcst-tbl-wrap { padding:6px 8px; }
-.fcst-tbl { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:9px; }
-.fcst-tbl th { font-family:var(--cond); font-size:8px; font-weight:700; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; padding:4px 6px; border-bottom:1px solid var(--border2); text-align:center; white-space:nowrap; }
-.fcst-tbl th.fcst-elem { color:var(--accent2); text-align:left; padding-left:8px; }
-.fcst-tbl td { padding:3px 6px; border-bottom:1px solid rgba(255,255,255,.04); text-align:center; white-space:nowrap; }
-.fcst-tbl td.fcst-elem { text-align:left; color:var(--muted); font-family:var(--cond); font-size:9px; font-weight:700; letter-spacing:.06em; padding-left:8px; }
-.fcst-tbl tr.fcst-day-hdr td { background:rgba(0,212,255,.06); color:var(--accent); font-family:var(--cond); font-weight:700; font-size:9px; letter-spacing:.1em; text-transform:uppercase; padding:5px 6px; border-top:1px solid rgba(0,212,255,.15); }
-.fcst-tbl .det { color:var(--bright); font-weight:700; }
-.fcst-tbl .p10 { color:var(--alert); }
-.fcst-tbl .p25 { color:var(--warn); }
-.fcst-tbl .p75 { color:var(--accent2); }
-.fcst-tbl .p90 { color:var(--green); }
-.fcst-tbl .nbm-val { color:var(--accent); }
-.fcst-src-legend { display:flex; gap:10px; padding:4px 8px 6px; font-family:var(--mono); font-size:8px; }
-.fcst-src-legend span { display:flex; align-items:center; gap:3px; }
-.fcst-el-group td { background:rgba(255,255,255,.02); }
+.fcst-tbl-wrap { padding:4px 6px 8px; }
+.fc-legend { font-family:var(--mono); font-size:8px; color:var(--muted); padding:4px 2px 6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.fc-det-samp { color:var(--bright); font-weight:700; font-size:10px; }
+.fc-p10 { color:#ff6b6b; }
+.fc-p25 { color:#ffa94d; }
+.fc-p75 { color:#74c0fc; }
+.fc-p90 { color:#69db7c; }
+/* Table */
+.fcst-tbl { border-collapse:collapse; font-family:var(--mono); font-size:10px; width:100%; }
+.fcst-tbl th { font-family:var(--cond); font-weight:700; letter-spacing:.06em; padding:6px 8px 4px; border-bottom:2px solid var(--border2); text-align:center; background:var(--panel); }
+.fcst-tbl td { padding:5px 8px; border-bottom:1px solid rgba(255,255,255,.05); text-align:center; vertical-align:top; }
+/* Section header rows */
+.fcst-row-sect .fcst-sect-lbl { background:rgba(0,212,255,.07); color:var(--accent); font-family:var(--cond); font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; padding:4px 8px; text-align:left; border-top:1px solid rgba(0,212,255,.2); }
+/* Element label column */
+.fcst-elem-lbl { text-align:left; color:var(--muted); font-family:var(--cond); font-size:9px; font-weight:700; letter-spacing:.05em; white-space:nowrap; padding:5px 10px 5px 8px; border-right:1px solid var(--border2); }
+/* Cell internals */
+.fc-det { font-size:13px; font-weight:700; color:var(--bright); line-height:1.2; }
+.fc-range { display:flex; justify-content:center; gap:3px; font-size:8px; margin-top:2px; color:var(--muted); }
+.fc-p10 { color:#ff6b6b; }
+.fc-p25 { color:#ffa94d; }
+.fc-p75 { color:#74c0fc; }
+.fc-p90 { color:#69db7c; }
+.fc-bar { color:rgba(255,255,255,.15); font-size:7px; }
+/* Wx cell */
+.fc-wx { font-size:9px; color:var(--muted); }
+.fc-wx-precip { color:var(--accent2); font-weight:700; }
+/* Alternating row tint */
+.fcst-tbl tbody tr:nth-child(even) td { background:rgba(255,255,255,.015); }
+/* Footer */
+.fc-footer { display:flex; flex-wrap:wrap; gap:10px; padding:6px 8px; font-family:var(--mono); font-size:8px; color:var(--muted); border-top:1px solid var(--border2); margin-top:2px; }
 /* ── MODAL (API key setup) ── */
 .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 100; display: flex; align-items: center; justify-content: center; }
 .modal-bg.hidden { display: none; }
@@ -2042,200 +2056,244 @@ function renderForecastTable(loc) {
   const container = document.getElementById('fcst-table-container');
   if(!container) return;
 
-  const locs = Object.keys(BOX_POINTS);
+  const locs  = Object.keys(BOX_POINTS);
   const nbmPt  = (liveData.nbm  || {})[fcstActiveLoc];
   const gefsPt = (liveData.gefs || {})[fcstActiveLoc];
   const gfsPt  = (liveData.gfs  || {})[fcstActiveLoc];
 
-  // Location selector bar
+  // ── Location selector ────────────────────────────────────────────────────
   let html = '<div class="fcst-loc-selector">';
   locs.forEach(l => {
-    const active = l === fcstActiveLoc;
-    html += `<button class="fcst-loc-btn${active?' active':''}" onclick="renderForecastTable('${l}')">${l}</button>`;
+    html += `<button class="fcst-loc-btn${l===fcstActiveLoc?' active':''}" onclick="renderForecastTable('${l}')">${l}</button>`;
   });
   html += '</div>';
 
-  // Legend
-  html += `<div class="fcst-src-legend">
-    <span><span style="color:var(--accent);font-weight:700">DET</span> = NBM deterministic</span>
-    <span><span style="color:var(--alert)">P10</span> = 10th pct (low end)</span>
-    <span><span style="color:var(--warn)">P25</span> = 25th pct</span>
-    <span><span style="color:var(--accent2)">P75</span> = 75th pct</span>
-    <span><span style="color:var(--green)">P90</span> = 90th pct (high end)</span>
-    <span style="color:var(--muted)">GEFS 31-member ensemble</span>
-  </div>`;
-
   if(!nbmPt && !gefsPt) {
-    html += '<div class="model-loading">Load model data first →</div>';
+    html += '<div class="model-loading" style="padding:16px">Load model data first →</div>';
     container.innerHTML = html;
     return;
   }
 
-  html += '<div class="fcst-tbl-wrap"><table class="fcst-tbl">';
-
-  // Header: date columns from NBM daily blocks (grouped by day)
-  // Build day keys from NBM 6h blocks
-  const dayGroups = {};
-  (nbmPt?.blocks || []).forEach(b => {
-    const dayKey = b.label.slice(0,6).trim();
-    (dayGroups[dayKey] = dayGroups[dayKey] || []).push(b);
-  });
-  const days = Object.keys(dayGroups).slice(0,7);
-
-  // GEFS daily stats indexed by MM-DD for easy label matching
-  const gefsDaily = {};
-  (gefsPt?.dailyStats || []).forEach(d => { gefsDaily[d.date.slice(5)] = d; }); // key: "03-13"
-
-  // GFS daily indexed by MM-DD
-  const gfsDaily = {};
-  (gfsPt?.daily || []).forEach(d => { gfsDaily[d.date.slice(5)] = d; });
-
-  // Convert NBM day label ("13 Mar") -> MM-DD ("03-13")
+  // ── Day key helpers ──────────────────────────────────────────────────────
   const MONTHS = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
                   Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
   function labelToMMDD(label) {
-    // label format: "13 Mar" or "13 Mar " (trimmed)
-    const parts = label.trim().split(' ');
-    if(parts.length < 2) return null;
-    const dd   = parts[0].padStart(2,'0');
-    const mm   = MONTHS[parts[1]] || '00';
-    return `${mm}-${dd}`;
+    const p = label.trim().split(' ');
+    return p.length >= 2 ? `${MONTHS[p[1]]||'00'}-${p[0].padStart(2,'0')}` : null;
   }
 
-  // Table header row
-  html += '<thead><tr>';
-  html += '<th class="fcst-elem">Element</th>';
-  days.forEach(day => {
-    html += `<th colspan="1">${day}</th>`;
+  // ── Build day list from NBM 6h blocks (first 7 unique days) ─────────────
+  // Split into DAY (06-17Z) and NIGHT (18-05Z) periods for each calendar day
+  const dayGroups = {};  // "13 Mar" -> all 6h blocks that day
+  (nbmPt?.blocks || []).forEach(b => {
+    const key = b.label.slice(0,6).trim();
+    (dayGroups[key] = dayGroups[key] || []).push(b);
   });
-  html += '</tr></thead><tbody>';
+  const days = Object.keys(dayGroups).slice(0,7);
 
-  // Helper: render a row
-  function row(label, vals, unit, decimals, cls) {
-    let r = `<tr class="${cls||''}"><td class="fcst-elem">${label}</td>`;
-    vals.forEach(v => {
-      r += `<td>${v !== null && v !== undefined ? (typeof v === 'number' ? v.toFixed(decimals||0) : v) : '—'}${unit||''}</td>`;
-    });
-    r += '</tr>';
-    return r;
+  // ── Index GEFS + GFS by MM-DD ────────────────────────────────────────────
+  const gefsDaily = {};
+  (gefsPt?.dailyStats || []).forEach(d => { gefsDaily[d.date.slice(5)] = d; });
+  const gfsDaily = {};
+  (gfsPt?.daily || []).forEach(d => { gfsDaily[d.date.slice(5)] = d; });
+
+  // ── Get NBM daily values ──────────────────────────────────────────────────
+  function nbmDayVal(day, field) {
+    const blocks = dayGroups[day] || [];
+    if(field === 'tHi') {
+      const vals = blocks.map(b => { const t=b.tRange||''; const p=t.replace('°F','').split('-'); return parseInt(p[1]||p[0])||null; }).filter(v=>v&&v>-90);
+      return vals.length ? Math.max(...vals) : null;
+    }
+    if(field === 'tLo') {
+      const vals = blocks.map(b => { const t=b.tRange||''; const p=t.replace('°F','').split('-'); return parseInt(p[0])||null; }).filter(v=>v&&v<990);
+      return vals.length ? Math.min(...vals) : null;
+    }
+    if(field === 'gust') {
+      const vals = blocks.map(b => parseInt((b.gust||'').replace('G','').replace('kt',''))||0).filter(v=>v>0);
+      return vals.length ? Math.max(...vals) : null;
+    }
+    if(field === 'wind') {
+      const vals = blocks.map(b => parseInt((b.wind||'').replace('kt',''))||0).filter(v=>v>0);
+      return vals.length ? Math.max(...vals) : null;
+    }
+    if(field === 'pop') {
+      const vals = blocks.map(b => b.pop||0);
+      return vals.length ? Math.max(...vals) : null;
+    }
+    if(field === 'wx') {
+      // Dominant wx string across the day
+      const wxAll = blocks.map(b => b.wx||'').join(' ');
+      if(/thunder|tstm/i.test(wxAll))   return '⛈ TSTM';
+      if(/snow|blizzard/i.test(wxAll))  return '❄ SNOW';
+      if(/fzra|freezing/i.test(wxAll))  return '🧊 FZRA';
+      if(/sleet|mix/i.test(wxAll))      return '🌨 MIX';
+      if(/rain|shower/i.test(wxAll))    return '🌧 RAIN';
+      if(/cloud|overcast/i.test(wxAll)) return '☁ CLDS';
+      if(/partly|mostly sunny/i.test(wxAll)) return '⛅ PTCLD';
+      if(/clear|sunny/i.test(wxAll))    return '☀ CLEAR';
+      return '— ';
+    }
+    return null;
   }
 
-  // Helper: render a percentile group row
-  function pctRow(label, daysFn, unit, dec) {
-    const rows = [];
-    const detVals = days.map(d => daysFn(d, 'det'));
-    const p10Vals = days.map(d => daysFn(d, 'p10'));
-    const p25Vals = days.map(d => daysFn(d, 'p25'));
-    const p75Vals = days.map(d => daysFn(d, 'p75'));
-    const p90Vals = days.map(d => daysFn(d, 'p90'));
-
-    rows.push(`<tr><td class="fcst-elem" rowspan="5" style="border-right:1px solid var(--border2);vertical-align:middle">${label}</td>`);
-    rows[0] += detVals.map(v => `<td class="det">${v!=null?(typeof v==='number'?v.toFixed(dec||0):v):'—'}${unit||''}</td>`).join('') + '</tr>';
-    rows.push('<tr class="fcst-el-group">' + p10Vals.map(v => `<td class="p10">${v!=null?v.toFixed(dec||0):'—'}${unit||''}</td>`).join('') + '</tr>');
-    rows.push('<tr class="fcst-el-group">' + p25Vals.map(v => `<td class="p25">${v!=null?v.toFixed(dec||0):'—'}${unit||''}</td>`).join('') + '</tr>');
-    rows.push('<tr class="fcst-el-group">' + p75Vals.map(v => `<td class="p75">${v!=null?v.toFixed(dec||0):'—'}${unit||''}</td>`).join('') + '</tr>');
-    rows.push('<tr class="fcst-el-group" style="border-bottom:2px solid rgba(255,255,255,.08)">' + p90Vals.map(v => `<td class="p90">${v!=null?v.toFixed(dec||0):'—'}${unit||''}</td>`).join('') + '</tr>');
-    return rows.join('');
+  // ── Render a compact cell: DET on top, then P10–P90 range bar ────────────
+  function cell(det, p10, p25, p75, p90, unit, dec) {
+    const fmt = (v, d) => v != null ? (+v).toFixed(d??0) : '—';
+    const detStr = det != null ? `<div class="fc-det">${fmt(det, dec)}${unit||''}</div>` : '<div class="fc-det">—</div>';
+    if(p10 == null && p90 == null) return `<td>${detStr}</td>`;
+    const rangeStr = `<div class="fc-range">
+      <span class="fc-p10">${fmt(p10,dec)}</span>
+      <span class="fc-p25">${fmt(p25,dec)}</span>
+      <span class="fc-bar">░</span>
+      <span class="fc-p75">${fmt(p75,dec)}</span>
+      <span class="fc-p90">${fmt(p90,dec)}</span>
+    </div>`;
+    return `<td>${detStr}${rangeStr}</td>`;
   }
 
-  // ── TEMPERATURE HIGH ──────────────────────────────────────────────────────
-  html += '<tr class="fcst-day-hdr"><td colspan="' + (days.length+1) + '">TEMPERATURE — HIGH (°F)</td></tr>';
-  html += pctRow('Hi °F', (day, stat) => {
-    const mmdd = labelToMMDD(day);
-    const g  = mmdd ? gefsDaily[mmdd] : null;
-    const nb = dayGroups[day];
-    if(stat==='det') {
-      const nbHi = nb ? Math.max(...nb.map(b => { const t=b.tRange; if(!t||t==='—') return -99; const p=t.replace('°F','').split('-'); return parseInt(p[1]||p[0])||0; }).filter(v=>v>-90)) : null;
-      return (nbHi != null && nbHi > -90) ? nbHi : null;
-    }
-    return g ? g.tHi[stat] : null;
-  }, '', 0);
+  function popCell(pop) {
+    if(pop == null) return '<td>—</td>';
+    const color = pop >= 70 ? 'var(--alert)' : pop >= 40 ? 'var(--warn)' : pop >= 20 ? 'var(--accent2)' : 'var(--muted)';
+    return `<td><div class="fc-det" style="color:${color}">${Math.round(pop)}%</div></td>`;
+  }
 
-  // ── TEMPERATURE LOW ───────────────────────────────────────────────────────
-  html += '<tr class="fcst-day-hdr"><td colspan="' + (days.length+1) + '">TEMPERATURE — LOW (°F)</td></tr>';
-  html += pctRow('Lo °F', (day, stat) => {
-    const mmdd = labelToMMDD(day);
-    const g  = mmdd ? gefsDaily[mmdd] : null;
-    const nb = dayGroups[day];
-    if(stat==='det') {
-      const nbLo = nb ? Math.min(...nb.map(b => { const t=b.tRange; if(!t||t==='—') return 999; const p=t.replace('°F','').split('-'); return parseInt(p[0])||0; }).filter(v=>v<990)) : null;
-      return (nbLo != null && nbLo < 990) ? nbLo : null;
-    }
-    return g ? g.tLo[stat] : null;
-  }, '', 0);
+  function wxCell(wx) {
+    const hasPrecip = /RAIN|SNOW|FZRA|MIX|TSTM/.test(wx||'');
+    return `<td><div class="fc-wx${hasPrecip?' fc-wx-precip':''}">${wx||'—'}</div></td>`;
+  }
 
-  // ── QPF ───────────────────────────────────────────────────────────────────
-  html += '<tr class="fcst-day-hdr"><td colspan="' + (days.length+1) + '">QPF (inches)</td></tr>';
-  html += pctRow('QPF"', (day, stat) => {
+  // ── QPF det: use NBM totalQPF proportioned by day ────────────────────────
+  // NBM gives us a 7-day total. Use GFS daily as the deterministic daily value
+  // since it's better resolved than NBM gridded per-day. Flag when NBM 7d total
+  // and GFS 7d total diverge significantly.
+
+  // ── TABLE ────────────────────────────────────────────────────────────────
+  // Layout: ROWS = elements, COLS = days
+  // Each cell: large DET value, small P10/P25/P75/P90 below
+
+  const colW = `style="min-width:68px;max-width:90px"`;
+
+  html += `<div class="fcst-tbl-wrap">`;
+
+  // Legend
+  html += `<div class="fc-legend">
+    <span class="fc-det-samp">DET</span> NBM deterministic &nbsp;|&nbsp;
+    <span class="fc-p10">P10</span> <span class="fc-p25">P25</span> <span style="color:var(--muted)">░</span> <span class="fc-p75">P75</span> <span class="fc-p90">P90</span> GEFS ensemble range
+  </div>`;
+
+  html += `<table class="fcst-tbl"><thead><tr>`;
+  html += `<th class="fcst-elem" style="min-width:80px"></th>`;
+  days.forEach(day => {
+    const mmdd = labelToMMDD(day);
+    const gd   = mmdd ? gefsDaily[mmdd] : null;
+    const conf = gd?.n >= 20 ? '' : '?';
+    // Day-of-week
+    const [dd, mon] = day.trim().split(' ');
+    const dateObj = new Date(`${mon} ${dd} ${new Date().getUTCFullYear()} UTC`);
+    const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dateObj.getUTCDay()];
+    html += `<th ${colW}><div style="font-size:10px;color:var(--bright)">${dow}</div><div style="font-size:9px;color:var(--muted)">${day.trim()}</div></th>`;
+  });
+  html += `</tr></thead><tbody>`;
+
+  // ── WX / Sky ─────────────────────────────────────────────────────────────
+  html += `<tr class="fcst-row-sect"><td class="fcst-sect-lbl" colspan="${days.length+1}">CONDITIONS</td></tr>`;
+  html += `<tr><td class="fcst-elem-lbl">Sky / Wx</td>`;
+  days.forEach(day => { html += wxCell(nbmDayVal(day, 'wx')); });
+  html += `</tr>`;
+
+  // ── PoP ──────────────────────────────────────────────────────────────────
+  html += `<tr><td class="fcst-elem-lbl">PoP %</td>`;
+  days.forEach(day => { html += popCell(nbmDayVal(day, 'pop')); });
+  html += `</tr>`;
+
+  // ── TEMPERATURE ──────────────────────────────────────────────────────────
+  html += `<tr class="fcst-row-sect"><td class="fcst-sect-lbl" colspan="${days.length+1}">TEMPERATURE (°F)</td></tr>`;
+
+  html += `<tr><td class="fcst-elem-lbl">High °F</td>`;
+  days.forEach(day => {
+    const mmdd = labelToMMDD(day);
+    const g = mmdd ? gefsDaily[mmdd] : null;
+    html += cell(nbmDayVal(day,'tHi'), g?.tHi.p10, g?.tHi.p25, g?.tHi.p75, g?.tHi.p90, '', 0);
+  });
+  html += `</tr>`;
+
+  html += `<tr><td class="fcst-elem-lbl">Low °F</td>`;
+  days.forEach(day => {
+    const mmdd = labelToMMDD(day);
+    const g = mmdd ? gefsDaily[mmdd] : null;
+    html += cell(nbmDayVal(day,'tLo'), g?.tLo.p10, g?.tLo.p25, g?.tLo.p75, g?.tLo.p90, '', 0);
+  });
+  html += `</tr>`;
+
+  // ── PRECIPITATION ─────────────────────────────────────────────────────────
+  html += `<tr class="fcst-row-sect"><td class="fcst-sect-lbl" colspan="${days.length+1}">PRECIPITATION</td></tr>`;
+
+  // QPF — det from NBM daily proportion, percentiles from GEFS
+  // NBM 7d totalQPF / 7 * daily GFS fraction gives per-day NBM QPF estimate
+  const nbmTotalQpf = parseFloat(nbmPt?.totalQPF || 0);
+  const gfsTotalQpf = days.reduce((s,d) => { const mmdd=labelToMMDD(d); const gd=mmdd?gfsDaily[mmdd]:null; return s+(gd?parseFloat(gd.qpf):0); }, 0);
+
+  html += `<tr><td class="fcst-elem-lbl">QPF (in)</td>`;
+  days.forEach(day => {
     const mmdd = labelToMMDD(day);
     const g  = mmdd ? gefsDaily[mmdd] : null;
     const gd = mmdd ? gfsDaily[mmdd]  : null;
-    if(stat==='det') return gd ? parseFloat(gd.qpf) : null;
-    return g ? g.qpf[stat] : null;
-  }, '"', 2);
+    // Scale GFS daily QPF by ratio of NBM total to GFS total (preserves NBM total, GFS daily shape)
+    let det = null;
+    if(gd) {
+      const gfsDay = parseFloat(gd.qpf);
+      const scale  = gfsTotalQpf > 0.01 ? nbmTotalQpf / gfsTotalQpf : 1;
+      det = +(gfsDay * scale).toFixed(2);
+    }
+    html += cell(det, g?.qpf.p10, g?.qpf.p25, g?.qpf.p75, g?.qpf.p90, '', 2);
+  });
+  html += `</tr>`;
 
-  // ── SNOWFALL ──────────────────────────────────────────────────────────────
-  html += '<tr class="fcst-day-hdr"><td colspan="' + (days.length+1) + '">SNOWFALL (inches)</td></tr>';
-  html += pctRow('Snow"', (day, stat) => {
+  html += `<tr><td class="fcst-elem-lbl">Snow (in)</td>`;
+  days.forEach(day => {
     const mmdd = labelToMMDD(day);
     const g  = mmdd ? gefsDaily[mmdd] : null;
     const gd = mmdd ? gfsDaily[mmdd]  : null;
-    if(stat==='det') return gd ? parseFloat(gd.snow) : null;
-    return g ? g.snow[stat] : null;
-  }, '"', 1);
-
-  // ── WIND GUST ─────────────────────────────────────────────────────────────
-  html += '<tr class="fcst-day-hdr"><td colspan="' + (days.length+1) + '">MAX WIND GUST (kt)</td></tr>';
-  html += pctRow('Gust kt', (day, stat) => {
-    const mmdd = labelToMMDD(day);
-    const g  = mmdd ? gefsDaily[mmdd] : null;
-    if(stat==='det') {
-      const nb = dayGroups[day];
-      if(!nb) return null;
-      const gusts = nb.map(b => { const g2=b.gust||''; return parseInt(g2.replace('G','').replace('kt',''))||0; }).filter(v=>v>0);
-      return gusts.length ? Math.max(...gusts) : null;
-    }
-    return g ? g.gust[stat] : null;
-  }, '', 0);
-
-  // ── WIND SPEED ────────────────────────────────────────────────────────────
-  html += '<tr class="fcst-day-hdr"><td colspan="' + (days.length+1) + '">MAX WIND SPEED (kt)</td></tr>';
-  html += pctRow('Wind kt', (day, stat) => {
-    const mmdd = labelToMMDD(day);
-    const g  = mmdd ? gefsDaily[mmdd] : null;
-    if(stat==='det') {
-      const nb = dayGroups[day];
-      if(!nb) return null;
-      const winds = nb.map(b => parseInt((b.wind||'').replace('kt',''))||0).filter(v=>v>0);
-      return winds.length ? Math.max(...winds) : null;
-    }
-    return g ? g.wind[stat] : null;
-  }, '', 0);
-
-  // ── PoP ───────────────────────────────────────────────────────────────────
-  html += '<tr class="fcst-day-hdr"><td colspan="' + (days.length+1) + '">PROB OF PRECIP (%)</td></tr>';
-  html += '<tr><td class="fcst-elem">PoP %</td>';
-  days.forEach(day => {
-    const nb = dayGroups[day];
-    const pop = nb ? Math.max(...nb.map(b => b.pop||0)) : null;
-    html += `<td class="nbm-val">${pop!=null?Math.round(pop):'—'}</td>`;
+    html += cell(gd ? parseFloat(gd.snow) : null, g?.snow.p10, g?.snow.p25, g?.snow.p75, g?.snow.p90, '', 1);
   });
-  html += '</tr>';
+  html += `</tr>`;
 
-  html += '</tbody></table>';
+  // ── WIND ──────────────────────────────────────────────────────────────────
+  html += `<tr class="fcst-row-sect"><td class="fcst-sect-lbl" colspan="${days.length+1}">WIND (kt)</td></tr>`;
 
-  // GEFS confidence footer
+  html += `<tr><td class="fcst-elem-lbl">Max Gust</td>`;
+  days.forEach(day => {
+    const mmdd = labelToMMDD(day);
+    const g = mmdd ? gefsDaily[mmdd] : null;
+    html += cell(nbmDayVal(day,'gust'), g?.gust.p10, g?.gust.p25, g?.gust.p75, g?.gust.p90, '', 0);
+  });
+  html += `</tr>`;
+
+  html += `<tr><td class="fcst-elem-lbl">Max Wind</td>`;
+  days.forEach(day => {
+    const mmdd = labelToMMDD(day);
+    const g = mmdd ? gefsDaily[mmdd] : null;
+    html += cell(nbmDayVal(day,'wind'), g?.wind.p10, g?.wind.p25, g?.wind.p75, g?.wind.p90, '', 0);
+  });
+  html += `</tr>`;
+
+  html += `</tbody></table>`;
+
+  // ── Confidence footer ─────────────────────────────────────────────────────
   if(gefsPt) {
     const confColor = gefsPt.confidence==='HIGH'?'var(--green)':gefsPt.confidence==='MEDIUM'?'var(--warn)':'var(--alert)';
-    html += `<div style="padding:4px 8px;font-family:var(--mono);font-size:9px;color:var(--muted)">
-      GEFS: <span style="color:${confColor};font-weight:700">${gefsPt.confidence} CONFIDENCE</span>
-      · ${gefsPt.nMembers} members · QPF spread ${gefsPt.totalQpfSpread}" over 7-day period
+    const nbmGfsDiv = Math.abs(nbmTotalQpf - gfsTotalQpf).toFixed(2);
+    html += `<div class="fc-footer">
+      <span>GEFS <span style="color:${confColor};font-weight:700">${gefsPt.confidence} CONFIDENCE</span> · ${gefsPt.nMembers} members</span>
+      <span>NBM 7d QPF: <strong>${nbmTotalQpf}"</strong> &nbsp; GFS 7d QPF: <strong>${gfsTotalQpf.toFixed(2)}"</strong>${parseFloat(nbmGfsDiv)>0.5?' <span style="color:var(--warn)">⚠ divergence '+nbmGfsDiv+'"</span>':''}</span>
+      <span>GEFS spread: ${gefsPt.totalQpfSpread}" &nbsp; Max gust: ${gefsPt.maxGustMean}±${gefsPt.maxGustSpread}kt</span>
     </div>`;
   }
-  html += '</div>';
 
+  html += `</div>`;
   container.innerHTML = html;
 }
+
 
 // ─── GFS PANEL RENDERER ──────────────────────────────────────────────────────
 function renderGFSPanel() {
