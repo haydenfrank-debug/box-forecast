@@ -464,6 +464,55 @@ select.fi option { background: var(--panel2); }
 }
 .ml-ext-link:hover { text-decoration: underline; }
 /* === END MODEL LINKS === */
+
+/* === FORECAST TABLE TOGGLE & PROB TABLE === */
+.fcst-tog-btn {
+  font-family: var(--mono); font-size: 8px; padding: 3px 10px;
+  background: none; border: 1px solid var(--border2); border-radius: 3px;
+  color: var(--muted); cursor: pointer; transition: all .15s;
+}
+.fcst-tog-btn.active {
+  background: rgba(56,189,248,.15); border-color: var(--accent2); color: var(--bright); font-weight: 700;
+}
+/* Prob table */
+.prob-tbl-wrap { padding: 8px; overflow-x: auto; }
+.prob-tbl { border-collapse: collapse; width: 100%; min-width: 500px; }
+.prob-tbl th {
+  font-family: var(--mono); font-size: 8px; font-weight: 700; color: var(--accent2);
+  border-bottom: 2px solid var(--border2); padding: 5px 8px; text-align: center;
+  white-space: nowrap; background: var(--bg2);
+}
+.prob-tbl td {
+  font-family: var(--mono); font-size: 9px; border-bottom: 1px solid var(--border2);
+  padding: 4px 8px; text-align: center; white-space: nowrap;
+}
+.prob-tbl .prob-lbl {
+  text-align: left; color: var(--muted); font-size: 8px; min-width: 130px;
+}
+.prob-tbl .prob-section td {
+  background: rgba(56,189,248,.06); color: var(--accent2); font-weight: 700;
+  font-size: 7px; letter-spacing: .08em; text-align: left;
+  border-top: 1px solid var(--border2); padding: 3px 8px;
+}
+.prob-cell-high   { color: #ef4444; font-weight: 700; }
+.prob-cell-med    { color: #fb923c; font-weight: 700; }
+.prob-cell-low    { color: #fbbf24; }
+.prob-cell-vlow   { color: var(--muted); }
+.prob-cell-zero   { color: var(--border2); }
+.prob-loc-header  { font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--bright);
+                    background: rgba(255,255,255,.04); border-bottom: 1px solid var(--border2);
+                    padding: 5px 8px; }
+.prob-source-note { font-family: var(--mono); font-size: 7px; color: var(--muted);
+                    padding: 4px 8px 2px; border-top: 1px solid var(--border2); }
+.prob-loc-sel { display: flex; gap: 4px; padding: 6px 8px; flex-wrap: wrap;
+                border-bottom: 1px solid var(--border2); }
+.prob-loc-btn {
+  font-family: var(--mono); font-size: 7px; padding: 2px 6px;
+  background: none; border: 1px solid var(--border2); border-radius: 3px;
+  color: var(--muted); cursor: pointer; transition: all .12s;
+}
+.prob-loc-btn.active { background: rgba(56,189,248,.2); border-color: var(--accent2); color: var(--bright); }
+/* === END PROB TABLE === */
 </style>
 </head>
 <body>
@@ -624,9 +673,16 @@ select.fi option { background: var(--panel2); }
       <div class="model-panel" id="mp-hrrr"><div class="model-loading">HRRR/CAM loads with model data →</div></div>
       <div class="model-panel" id="mp-gfs"><div class="model-loading">GFS loads automatically →</div></div>
       <div class="model-panel" id="mp-gefs"><div class="model-loading">GEFS ensemble loads automatically →</div></div>
-      <div class="model-panel" id="mp-fcst" style="padding:0">
-        <div id="fcst-table-container" style="font-family:var(--mono);font-size:9px">
+      <div class="model-panel" id="mp-fcst" style="padding:0;display:flex;flex-direction:column">
+        <div id="fcst-view-toggle" style="display:flex;gap:4px;padding:4px 8px;border-bottom:1px solid var(--border2);flex-shrink:0">
+          <button id="fcst-tog-elem" class="fcst-tog-btn active" onclick="fcstSetView('elem')">📊 Element Table</button>
+          <button id="fcst-tog-prob" class="fcst-tog-btn" onclick="fcstSetView('prob')">🎲 Prob Table</button>
+        </div>
+        <div id="fcst-table-container" style="font-family:var(--mono);font-size:9px;overflow-y:auto;flex:1">
           <div class="model-loading">Forecast table loads with model data →</div>
+        </div>
+        <div id="fcst-prob-container" style="font-family:var(--mono);font-size:9px;overflow-y:auto;flex:1;display:none">
+          <div class="model-loading">Probability table loads with model data →</div>
         </div>
       </div>
       <div class="model-panel" id="mp-mos"><div class="model-loading">MOS + GFS text loads with model data →</div></div>
@@ -2219,6 +2275,15 @@ async function fetchGEFSPoint(name, lat, lon) {
         gust:  stats(gustVals),
         wind:  stats(windVals),
         n:     qpfVals.length,
+        // raw member arrays for per-day exceedance probability calcs
+        _memberVals: {
+          tHi:  tMaxVals,
+          tLo:  tMinVals,
+          qpf:  qpfVals,
+          snow: snowVals,
+          gust: gustVals,
+          wind: windVals,
+        },
       });
     });
 
@@ -2250,7 +2315,47 @@ async function fetchGEFSPoint(name, lat, lon) {
     const spreadRatio = allSprd / Math.max(0.01, allQpf);
     const confidence  = spreadRatio < 0.3 ? 'HIGH' : spreadRatio < 0.7 ? 'MEDIUM' : 'LOW';
 
-    return { name, lat, lon, blocks, dailyStats,
+    // Exceedance probabilities over 7-day window (% of members exceeding threshold)
+    const nM = tempKeys.length;
+    function excPct(vals, thresh) {
+      if(!vals || !vals.length) return 0;
+      return Math.round(100 * vals.filter(v=>v>=thresh).length / vals.length);
+    }
+    // Per-member 7-day totals
+    const memberQpf7   = tempKeys.map(mk => {
+      const key = mk.replace('temperature_2m_member','');
+      const qpfKey = `precipitation_member${key}`;
+      const vals = raw[qpfKey] || [];
+      return vals.slice(0, Math.min(168, vals.length)).reduce((s,v)=>s+(v||0),0) * 0.0393701;
+    });
+    const memberSnow7  = tempKeys.map(mk => {
+      const key = mk.replace('temperature_2m_member','');
+      const snowKey = `snowfall_member${key}`;
+      const vals = raw[snowKey] || [];
+      return vals.slice(0, Math.min(168, vals.length)).reduce((s,v)=>s+(v||0),0) * 0.393701;
+    });
+    // Per-member max daily gust
+    const memberMaxGust = dailyStats[0] ? tempKeys.map((mk,mi) => {
+      return Math.max(...dailyStats.slice(0,7).map(d => d._memberGusts ? (d._memberGusts[mi]||0) : 0));
+    }) : [];
+    // Wind
+    const memberMaxWind = dailyStats[0] ? tempKeys.map((mk,mi) => {
+      return Math.max(...dailyStats.slice(0,7).map(d => d._memberWinds ? (d._memberWinds[mi]||0) : 0));
+    }) : [];
+
+    const exceedance = {
+      qpf1:   excPct(memberQpf7,   1.0),
+      qpf2:   excPct(memberQpf7,   2.0),
+      snow6:  excPct(memberSnow7,  6.0),
+      snow12: excPct(memberSnow7, 12.0),
+      snow18: excPct(memberSnow7, 18.0),
+      wind35: excPct(memberMaxWind, 35),
+      wind50: excPct(memberMaxWind, 50),
+      gust45: excPct(memberMaxGust, 45),
+      gust60: excPct(memberMaxGust, 60),
+    };
+
+    return { name, lat, lon, blocks, dailyStats, exceedance,
              totalQPF: allQpf.toFixed(2), totalQpfSpread: allSprd.toFixed(2),
              maxGustMean: Math.round(maxGM), maxGustSpread: Math.round(maxGS),
              confidence, nMembers: tempKeys.length };
@@ -2317,6 +2422,7 @@ async function fetchModelData() {
     renderGFSPanel();
     renderGEFSPanel();
     renderForecastTable();
+    renderProbTable(probActiveLoc);
     renderMOSPanel();
     renderSoundingPanel();
     renderFrontoPanel();
@@ -2592,6 +2698,251 @@ function renderForecastTable(loc) {
 
 
 
+
+// ─── FORECAST PROB TABLE ─────────────────────────────────────────────────────
+let probActiveLoc = 'Boston';
+
+function fcstSetView(view) {
+  const elemBtn  = document.getElementById('fcst-tog-elem');
+  const probBtn  = document.getElementById('fcst-tog-prob');
+  const elemDiv  = document.getElementById('fcst-table-container');
+  const probDiv  = document.getElementById('fcst-prob-container');
+  if(!elemDiv || !probDiv) return;
+  if(view === 'prob') {
+    elemDiv.style.display = 'none';
+    probDiv.style.display = 'block';
+    elemBtn.classList.remove('active');
+    probBtn.classList.add('active');
+    renderProbTable(null);
+  } else {
+    elemDiv.style.display = 'block';
+    probDiv.style.display = 'none';
+    elemBtn.classList.add('active');
+    probBtn.classList.remove('active');
+  }
+}
+
+function renderProbTable(loc) {
+  if(loc) probActiveLoc = loc;
+  const container = document.getElementById('fcst-prob-container');
+  if(!container) return;
+
+  const locs = Object.keys(BOX_POINTS);
+  let html = '';
+
+  // Location selector
+  html += '<div class="prob-loc-sel">';
+  locs.forEach(l => {
+    html += `<button class="prob-loc-btn${l===probActiveLoc?' active':''}" onclick="renderProbTable('${l}')">${l}</button>`;
+  });
+  html += '</div>';
+
+  const gefs = (liveData.gefs || {})[probActiveLoc];
+  const nbm  = (liveData.nbm  || {})[probActiveLoc];
+  const gfs  = (liveData.gfs  || {})[probActiveLoc];
+  const gefsPts = Object.values(liveData.gefs || {}).filter(p => p && !p.error);
+
+  if(!gefs && !nbm) {
+    html += '<div class="model-loading" style="padding:16px">Load model data first →</div>';
+    container.innerHTML = html;
+    return;
+  }
+
+  // ── Helper: color-code probability cell ────────────────────────────────────
+  function probCell(pct, high=60, med=30, low=10) {
+    if(pct == null || pct === undefined) return '<td class="prob-cell-zero">—</td>';
+    const cls = pct >= high ? 'prob-cell-high' : pct >= med ? 'prob-cell-med' : pct >= low ? 'prob-cell-low' : pct > 0 ? 'prob-cell-vlow' : 'prob-cell-zero';
+    const display = pct > 0 ? `${pct}%` : '<span style="color:var(--border2)">—</span>';
+    return `<td class="${cls}">${display}</td>`;
+  }
+
+  function detCell(val, unit='', dec=0) {
+    if(val == null) return '<td class="prob-cell-zero">—</td>';
+    return `<td style="color:var(--bright)">${(+val).toFixed(dec)}${unit}</td>`;
+  }
+
+  // ── Build day list from GEFS dailyStats ────────────────────────────────────
+  const days = gefs?.dailyStats?.slice(0,7) || [];
+  const dayHeaders = days.map(d => {
+    const dt = new Date(d.date + 'T12:00:00Z');
+    const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getUTCDay()];
+    return `<th>${dow}<br><span style="color:var(--muted);font-size:7px">${d.date.slice(5)}</span></th>`;
+  }).join('');
+
+  // ── Per-member per-day exceedance calcs ────────────────────────────────────
+  function dailyExc(fieldKey, thresh) {
+    if(!days.length) return Array(7).fill(null);
+    return days.map(d => {
+      if(!d._memberVals || !d._memberVals[fieldKey]) return null;
+      const vals = d._memberVals[fieldKey];
+      return Math.round(100 * vals.filter(v => v >= thresh).length / Math.max(1, vals.length));
+    });
+  }
+
+  // Use stored member arrays from dailyStats
+  const snowP50Day  = days.map(d => d.snow ? ((d.snow.p25 + d.snow.p75) / 2).toFixed(1) : null);
+  const snowP90Day  = days.map(d => d.snow ? d.snow.p90.toFixed(1) : null);
+  const qpfP50Day   = days.map(d => d.qpf  ? ((d.qpf.p25 + d.qpf.p75) / 2).toFixed(2) : null);
+  const qpfP90Day   = days.map(d => d.qpf  ? d.qpf.p90.toFixed(2) : null);
+  const gustP90Day  = days.map(d => d.gust ? d.gust.p90.toFixed(0) : null);
+  const windP90Day  = days.map(d => d.wind ? d.wind.p90.toFixed(0) : null);
+  const tHiP10Day   = days.map(d => d.tHi  ? d.tHi.p10.toFixed(0) : null);
+  const tHiP90Day   = days.map(d => d.tHi  ? d.tHi.p90.toFixed(0) : null);
+  const tLoP10Day   = days.map(d => d.tLo  ? d.tLo.p10.toFixed(0) : null);
+  const tLoP90Day   = days.map(d => d.tLo  ? d.tLo.p90.toFixed(0) : null);
+
+  // NBM deterministic per-day
+  function nbmDay(day, field) {
+    if(!nbm?.blocks) return null;
+    const MONTHS = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+    const blocks = nbm.blocks.filter(b => {
+      const p = b.label.slice(0,6).trim().split(' ');
+      const mmdd = p.length>=2 ? `${MONTHS[p[1]]||'00'}-${p[0].padStart(2,'0')}` : null;
+      return mmdd === day.date.slice(5);
+    });
+    if(field==='pop') return blocks.length ? Math.max(...blocks.map(b=>b.pop||0)) : null;
+    if(field==='wx') {
+      const wx = blocks.map(b=>b.wx||'').join(' ');
+      if(/snow|blizzard/i.test(wx)) return '❄ SNOW';
+      if(/fzra|freezing/i.test(wx)) return '🧊 FZRA';
+      if(/sleet|mix/i.test(wx))    return '🌨 MIX';
+      if(/rain/i.test(wx))         return '🌧 RAIN';
+      if(/thunder/i.test(wx))      return '⛈ TSTM';
+      return '—';
+    }
+    return null;
+  }
+
+  // ── Multi-location snow/wind comparison row (BOX CWA spread) ──────────────
+  function cwaSpread(field, thresh) {
+    // How many of the 6 BOX GEFS points exceed threshold (7-day total)
+    const exc = gefsPts.map(p => p.exceedance?.[field] || 0);
+    const mean = exc.length ? Math.round(exc.reduce((s,v)=>s+v,0)/exc.length) : null;
+    return mean;
+  }
+
+  // TABLE BUILD
+  html += `<div class="prob-tbl-wrap">`;
+  html += `<table class="prob-tbl">`;
+  html += `<thead><tr><th class="prob-lbl" style="text-align:left;color:var(--bright)">${probActiveLoc}</th>${dayHeaders}</tr></thead>`;
+  html += `<tbody>`;
+
+  // ── SECTION: CONDITIONS ────────────────────────────────────────────────────
+  html += `<tr class="prob-section"><td colspan="${days.length+1}">CONDITIONS (NBM DET)</td></tr>`;
+  html += `<tr><td class="prob-lbl">Wx / Type</td>${days.map(d => `<td style="color:var(--accent2)">${nbmDay(d,'wx')||'—'}</td>`).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">PoP %</td>${days.map(d => {
+    const p = nbmDay(d,'pop');
+    const c = p>=70?'prob-cell-high':p>=40?'prob-cell-med':p>=20?'prob-cell-low':p>0?'prob-cell-vlow':'prob-cell-zero';
+    return `<td class="${c}">${p!=null&&p>0?p+'%':'—'}</td>`;
+  }).join('')}</tr>`;
+
+  // ── SECTION: TEMPERATURE ──────────────────────────────────────────────────
+  html += `<tr class="prob-section"><td colspan="${days.length+1}">TEMPERATURE (GEFS P10–P90)</td></tr>`;
+  html += `<tr><td class="prob-lbl">High P10/P90 °F</td>${days.map((d,i) => {
+    const lo=tHiP10Day[i], hi=tHiP90Day[i];
+    return lo&&hi ? `<td style="color:var(--bright)">${lo}–${hi}</td>` : '<td class="prob-cell-zero">—</td>';
+  }).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">Low P10/P90 °F</td>${days.map((d,i) => {
+    const lo=tLoP10Day[i], hi=tLoP90Day[i];
+    return lo&&hi ? `<td style="color:var(--bright)">${lo}–${hi}</td>` : '<td class="prob-cell-zero">—</td>';
+  }).join('')}</tr>`;
+  // Prob of freeze (Low ≤ 32°F)
+  html += `<tr><td class="prob-lbl">P(Low ≤32°F)</td>${days.map(d => {
+    if(!d.tLo?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    const vals = d.tLo._memberVals;
+    const p = vals ? Math.round(100*vals.filter(v=>v<=32).length/Math.max(1,vals.length)) : null;
+    return probCell(p, 70, 30, 10);
+  }).join('')}</tr>`;
+
+  // ── SECTION: QPF ──────────────────────────────────────────────────────────
+  html += `<tr class="prob-section"><td colspan="${days.length+1}">QPF — GEFS 31 Members</td></tr>`;
+  html += `<tr><td class="prob-lbl">QPF P50 / P90 (in)</td>${days.map((d,i) =>
+    qpfP50Day[i]!=null ? `<td style="color:var(--accent2)">${qpfP50Day[i]}<span style="color:var(--muted);font-size:7px"> / ${qpfP90Day[i]}</span></td>` : '<td class="prob-cell-zero">—</td>'
+  ).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">P(QPF ≥ 0.50")</td>${days.map(d => {
+    if(!d.qpf?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    const vals = d.qpf._memberVals;
+    return probCell(vals ? Math.round(100*vals.filter(v=>v>=0.5).length/Math.max(1,vals.length)) : null);
+  }).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">P(QPF ≥ 1.00")</td>${days.map(d => {
+    if(!d.qpf?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    const vals = d.qpf._memberVals;
+    return probCell(vals ? Math.round(100*vals.filter(v=>v>=1.0).length/Math.max(1,vals.length)) : null);
+  }).join('')}</tr>`;
+
+  // ── SECTION: SNOW ─────────────────────────────────────────────────────────
+  html += `<tr class="prob-section"><td colspan="${days.length+1}">SNOW — GEFS 31 Members</td></tr>`;
+  html += `<tr><td class="prob-lbl">Snow P50 / P90 (in)</td>${days.map((d,i) =>
+    snowP50Day[i]!=null ? `<td style="color:#93c5fd">${snowP50Day[i]}<span style="color:var(--muted);font-size:7px"> / ${snowP90Day[i]}</span></td>` : '<td class="prob-cell-zero">—</td>'
+  ).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">P(Snow ≥ 1")</td>${days.map(d => {
+    if(!d.snow?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    return probCell(Math.round(100*d.snow._memberVals.filter(v=>v>=1).length/Math.max(1,d.snow._memberVals.length)));
+  }).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">P(Snow ≥ 4")</td>${days.map(d => {
+    if(!d.snow?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    return probCell(Math.round(100*d.snow._memberVals.filter(v=>v>=4).length/Math.max(1,d.snow._memberVals.length)));
+  }).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">P(Snow ≥ 6")</td>${days.map(d => {
+    if(!d.snow?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    return probCell(Math.round(100*d.snow._memberVals.filter(v=>v>=6).length/Math.max(1,d.snow._memberVals.length)));
+  }).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">P(Snow ≥ 12")</td>${days.map(d => {
+    if(!d.snow?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    return probCell(Math.round(100*d.snow._memberVals.filter(v=>v>=12).length/Math.max(1,d.snow._memberVals.length)), 40, 20, 5);
+  }).join('')}</tr>`;
+
+  // ── SECTION: WIND ─────────────────────────────────────────────────────────
+  html += `<tr class="prob-section"><td colspan="${days.length+1}">WIND & GUSTS — GEFS 31 Members</td></tr>`;
+  html += `<tr><td class="prob-lbl">Wind P90 (kt)</td>${days.map((d,i) =>
+    windP90Day[i]!=null ? `<td style="color:var(--bright)">${windP90Day[i]}kt</td>` : '<td class="prob-cell-zero">—</td>'
+  ).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">Gust P90 (kt)</td>${days.map((d,i) =>
+    gustP90Day[i]!=null ? `<td style="color:var(--bright)">${gustP90Day[i]}kt</td>` : '<td class="prob-cell-zero">—</td>'
+  ).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">P(Gust ≥ 35kt)</td>${days.map(d => {
+    if(!d.gust?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    return probCell(Math.round(100*d.gust._memberVals.filter(v=>v>=35).length/Math.max(1,d.gust._memberVals.length)));
+  }).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">P(Gust ≥ 45kt)</td>${days.map(d => {
+    if(!d.gust?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    return probCell(Math.round(100*d.gust._memberVals.filter(v=>v>=45).length/Math.max(1,d.gust._memberVals.length)));
+  }).join('')}</tr>`;
+  html += `<tr><td class="prob-lbl">P(Gust ≥ 60kt)</td>${days.map(d => {
+    if(!d.gust?._memberVals) return '<td class="prob-cell-zero">—</td>';
+    return probCell(Math.round(100*d.gust._memberVals.filter(v=>v>=60).length/Math.max(1,d.gust._memberVals.length)), 30, 15, 5);
+  }).join('')}</tr>`;
+
+  // ── SECTION: 7-DAY TOTALS (CWA spread) ────────────────────────────────────
+  if(gefs?.exceedance) {
+    const e = gefs.exceedance;
+    html += `<tr class="prob-section"><td colspan="${days.length+1}">7-DAY TOTALS — ${probActiveLoc} (GEFS)</td></tr>`;
+    html += `<tr><td class="prob-lbl">Total QPF P50/P90</td><td colspan="${days.length}" style="text-align:left;color:var(--accent2)">
+      ${gefs.totalQPF}" det &nbsp;|&nbsp; Spread: ±${gefs.totalQpfSpread}"
+      &nbsp;&nbsp; P(QPF≥1"): ${probCell(e.qpf1).replace(/<\/?td[^>]*>/g,'')}
+      &nbsp; P(QPF≥2"): ${probCell(e.qpf2).replace(/<\/?td[^>]*>/g,'')}
+    </td></tr>`;
+    html += `<tr><td class="prob-lbl">Total Snow</td><td colspan="${days.length}" style="text-align:left;color:#93c5fd">
+      P(≥6"): <span class="${e.snow6>=60?'prob-cell-high':e.snow6>=30?'prob-cell-med':e.snow6>=10?'prob-cell-low':'prob-cell-vlow'}">${e.snow6||0}%</span>
+      &nbsp; P(≥12"): <span class="${e.snow12>=40?'prob-cell-high':e.snow12>=20?'prob-cell-med':e.snow12>=5?'prob-cell-low':'prob-cell-vlow'}">${e.snow12||0}%</span>
+      &nbsp; P(≥18"): <span class="${e.snow18>=30?'prob-cell-high':e.snow18>=15?'prob-cell-med':e.snow18>=5?'prob-cell-low':'prob-cell-vlow'}">${e.snow18||0}%</span>
+    </td></tr>`;
+    html += `<tr><td class="prob-lbl">Max Gust</td><td colspan="${days.length}" style="text-align:left;color:var(--bright)">
+      Det: ${gefs.maxGustMean}kt &nbsp;|&nbsp; Spread: ±${gefs.maxGustSpread}kt
+      &nbsp;&nbsp; P(≥35kt): <span class="${e.wind35>=60?'prob-cell-high':e.wind35>=30?'prob-cell-med':'prob-cell-low'}">${e.wind35||0}%</span>
+      &nbsp; P(≥45kt): <span class="${e.gust45>=60?'prob-cell-high':e.gust45>=30?'prob-cell-med':'prob-cell-low'}">${e.gust45||0}%</span>
+      &nbsp; P(≥60kt): <span class="${e.gust60>=30?'prob-cell-high':e.gust60>=15?'prob-cell-med':'prob-cell-low'}">${e.gust60||0}%</span>
+      &nbsp; CONFIDENCE: <strong style="color:${gefs.confidence==='HIGH'?'var(--green)':gefs.confidence==='MEDIUM'?'var(--warn)':'var(--alert)'}">${gefs.confidence}</strong>
+    </td></tr>`;
+  }
+
+  html += `</tbody></table>`;
+  html += `<div class="prob-source-note">Source: GEFS 31 members (open-meteo) · NBM deterministic · Color: <span class="prob-cell-high">≥60%</span> <span class="prob-cell-med">≥30%</span> <span class="prob-cell-low">≥10%</span> <span class="prob-cell-vlow">&lt;10%</span></div>`;
+  html += `</div>`;
+
+  container.innerHTML = html;
+}
+// ─── END FORECAST PROB TABLE ─────────────────────────────────────────────────
 
 // ─── ESAT PANEL ─────────────────────────────────────────────────────────────
 // Ensemble Situational Awareness Table — satable.ncep.noaa.gov
@@ -3231,8 +3582,30 @@ function formatGEFSForAFD(live) {
   return names.map(name => {
     const p = pts[name];
     if(p.error) return `${name}: ERROR — ${p.error}`;
-    return `${name}: QPF=${p.totalQPF}"±${p.totalQpfSpread}" MaxGust=${p.maxGustMean}±${p.maxGustSpread}kt CONFIDENCE:${p.confidence} (${p.nMembers} members)`;
-  }).join('\n');
+    let out = `${name}: QPF=${p.totalQPF}"±${p.totalQpfSpread}" MaxGust=${p.maxGustMean}±${p.maxGustSpread}kt CONFIDENCE:${p.confidence} (${p.nMembers} members)`;
+    // Add daily percentile breakdown if available
+    if(p.dailyStats && p.dailyStats.length) {
+      const days = p.dailyStats.slice(0,7).map(d => {
+        const dt = d.date ? d.date.slice(5) : '?';
+        const qpf = d.qpf;
+        const snow = d.snow;
+        const thi  = d.tHi;
+        const gust = d.gust;
+        const qpfStr  = qpf  ? `QPF P10/P50/P90=${qpf.p10.toFixed(2)}/${((qpf.p25+qpf.p75)/2).toFixed(2)}/${qpf.p90.toFixed(2)}"` : '';
+        const snowStr = snow && snow.p90>0.1 ? ` Snow P50/P90=${((snow.p25+snow.p75)/2).toFixed(1)}/${snow.p90.toFixed(1)}"` : '';
+        const gustStr = gust ? ` Gust P25/P75/P90=${gust.p25.toFixed(0)}/${gust.p75.toFixed(0)}/${gust.p90.toFixed(0)}kt` : '';
+        const tStr    = thi  ? ` HiT P10/P90=${thi.p10.toFixed(0)}/${thi.p90.toFixed(0)}°F` : '';
+        return `  ${dt}: ${qpfStr}${snowStr}${gustStr}${tStr}`;
+      });
+      out += '\n' + days.join('\n');
+    }
+    // Exceedance probabilities from members
+    if(p.exceedance) {
+      const e = p.exceedance;
+      out += `\n  EXCEEDANCE — Snow>6":${e.snow6||0}% Snow>12":${e.snow12||0}% QPF>1":${e.qpf1||0}% Wind>35kt:${e.wind35||0}% Gust>45kt:${e.gust45||0}%`;
+    }
+    return out;
+  }).join('\n\n');
 }
 
 function buildModelSummary() {
@@ -3779,7 +4152,10 @@ ${formatSoundingsForAFD(live)}
 ====== FRONTOGENESIS / DYNAMICS ======
 ${formatFrontoForAFD(live)}
 
-====== ENSEMBLE GUIDANCE ======
+====== GEFS 31-MEMBER PROBABILITIES ======
+${formatGEFSForAFD(live)}
+
+====== ENSEMBLE GUIDANCE (paste-in) ======
 ${formatEnsembleForAFD(live) || 'Not provided.'}
 
 ====== ACTIVE ALERTS ======
@@ -3815,7 +4191,10 @@ RULES:
 - Note any significant cross-location differences (e.g. rain at coast vs snow inland)
 - Do NOT apply coastal temperature moderation
 - Keep language concise and public-forecast style (no jargon)
-- End with a brief HAZARD SUMMARY listing any watch/warning/advisory criteria met`;
+- End with a brief HAZARD SUMMARY listing any watch/warning/advisory criteria met
+- PRECIP TIMING: Be precise — if rain/precip is clearing Monday night through Tuesday morning, state "Rain ending by early Tuesday" or similar. Do NOT leave precip language extending into Tuesday unless model data explicitly supports afternoon/evening precip
+- If GEFS daily exceedance probabilities are in the data above, use them to qualify uncertainty (e.g. "chance of 6 or more inches")
+- If paste-in ensemble guidance includes HREF/SREF: use for QPF placement differences across the CWA — explicitly note any mesoscale gradients (coast vs inland, Cape vs mainland)`;
 }
 
 // ─── AFD PROMPT BUILDER ───────────────────────────────────────────────────────
@@ -3918,7 +4297,15 @@ Rules:
 - Section headers: .SYNOPSIS, .SHORT TERM, .LONG TERM
 - End each section with &&
 - CONFIDENCE: HIGH/MEDIUM/LOW after each section with brief reasoning
-- NOTE: lines for every BOX bias correction applied, citing the model base value`;
+- NOTE: lines for every BOX bias correction applied, citing the model base value
+- PRECIP TIMING: Be precise about when precipitation ends. If rain/precip is ending Monday night through Tuesday morning, state it ends by Tuesday — do NOT leave precip language open-ended into Tuesday afternoon/evening unless models support it
+- If GEFS exceedance probabilities are provided above, cite them explicitly (e.g. "GEFS shows 45% chance of snow exceeding 6 inches")
+- If paste-in ensemble guidance includes HREF/SREF/RRFS: weight HREF highest for QPF placement and precip type; SREF for day 2-3 uncertainty; RRFS for mesoscale features
+- If WoFS output is pasted in: use it for sub-hourly convective timing and rotation tracks
+- If Mesoscale Banding tool output is pasted in: cite banding probability explicitly and apply QPF upward bias if 700mb temp supports dendritic growth
+- If HYSPLIT trajectory output is pasted in: use air mass origin to contextualize moisture source and thermal advection
+- If PW/precipitable water data is pasted in: compare to climatology and note anomaly relative to normal
+- CSU-MLP probabilities (if pasted): cite alongside traditional guidance for hazard probabilities`;
 }
 
 function buildAvnMarinePrompt(f, live) {
