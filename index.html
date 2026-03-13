@@ -313,6 +313,54 @@ select.fi option { background: var(--panel2); }
 .fcst-tbl tbody tr:nth-child(even) td { background:rgba(255,255,255,.015); }
 /* Footer */
 .fc-footer { display:flex; flex-wrap:wrap; gap:10px; padding:6px 8px; font-family:var(--mono); font-size:8px; color:var(--muted); border-top:1px solid var(--border2); margin-top:2px; }
+
+/* ── CSU-MLP PANEL ── */
+#csu-mlp-container { font-family: var(--cond); }
+.csu-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:7px 10px; background:var(--panel); border-bottom:1px solid var(--border2); position:sticky; top:0; z-index:3; }
+.csu-toolbar-title { font-size:10px; font-weight:700; letter-spacing:.1em; color:#a78bfa; text-transform:uppercase; margin-right:4px; }
+.csu-tab-group { display:flex; gap:3px; }
+.csu-tab { font-family:var(--cond); font-size:9px; font-weight:700; letter-spacing:.07em; padding:3px 9px; border:1px solid var(--border2); border-radius:3px; background:transparent; color:var(--muted); cursor:pointer; text-transform:uppercase; transition:all .15s; white-space:nowrap; }
+.csu-tab.active { background:#a78bfa; color:#000; border-color:#a78bfa; }
+.csu-tab:hover:not(.active) { color:var(--bright); border-color:#a78bfa; }
+.csu-sep { width:1px; background:var(--border2); align-self:stretch; margin:0 2px; }
+.csu-init-sel { font-family:var(--mono); font-size:9px; padding:2px 5px; background:var(--bg); border:1px solid var(--border2); color:var(--bright); border-radius:3px; cursor:pointer; }
+.csu-day-btns { display:flex; gap:2px; }
+.csu-day-btn { font-family:var(--mono); font-size:9px; font-weight:700; padding:2px 7px; border:1px solid var(--border2); border-radius:3px; background:transparent; color:var(--muted); cursor:pointer; transition:all .12s; }
+.csu-day-btn.active { background:rgba(167,139,250,.25); color:#a78bfa; border-color:#a78bfa; }
+.csu-day-btn:hover:not(.active) { color:var(--bright); }
+.csu-img-wrap { padding:8px; }
+.csu-img-wrap img { width:100%; border-radius:4px; display:block; background:#111; min-height:200px; }
+.csu-img-caption { font-family:var(--mono); font-size:8px; color:var(--muted); margin-top:4px; text-align:center; }
+.csu-err { padding:16px; font-family:var(--mono); font-size:9px; color:var(--alert); }
+.csu-badge { font-size:8px; font-weight:700; padding:1px 5px; border-radius:2px; background:rgba(167,139,250,.15); color:#a78bfa; border:1px solid rgba(167,139,250,.3); letter-spacing:.06em; }
+.csu-6panel-btn { font-family:var(--cond); font-size:9px; font-weight:700; letter-spacing:.07em; padding:3px 9px; border:1px solid rgba(167,139,250,.4); border-radius:3px; background:rgba(167,139,250,.1); color:#a78bfa; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.csu-6panel-btn:hover { background:rgba(167,139,250,.25); }
+.csu-6panel-btn.active { background:#a78bfa; color:#000; }
+
+/* ── ESAT PANEL ── */
+#esat-container { font-family: var(--cond); }
+.esat-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:7px 10px; background:var(--panel); border-bottom:1px solid var(--border2); flex-shrink:0; }
+.esat-title { font-size:10px; font-weight:700; letter-spacing:.1em; color:#34d399; text-transform:uppercase; }
+.esat-badge { font-size:8px; font-weight:700; padding:1px 5px; border-radius:2px; background:rgba(52,211,153,.12); color:#34d399; border:1px solid rgba(52,211,153,.3); letter-spacing:.06em; }
+.esat-sep { width:1px; background:var(--border2); align-self:stretch; margin:0 2px; }
+.esat-mode-btn { font-family:var(--cond); font-size:9px; font-weight:700; letter-spacing:.07em; padding:3px 9px; border:1px solid var(--border2); border-radius:3px; background:transparent; color:var(--muted); cursor:pointer; text-transform:uppercase; transition:all .15s; white-space:nowrap; }
+.esat-mode-btn.active { background:#34d399; color:#000; border-color:#34d399; }
+.esat-mode-btn:hover:not(.active) { color:var(--bright); border-color:#34d399; }
+.esat-region-sel, .esat-output-sel { font-family:var(--mono); font-size:9px; padding:2px 5px; background:var(--bg); border:1px solid var(--border2); color:var(--bright); border-radius:3px; cursor:pointer; }
+.esat-go-btn { font-family:var(--cond); font-size:9px; font-weight:700; padding:3px 10px; border:1px solid #34d399; border-radius:3px; background:rgba(52,211,153,.15); color:#34d399; cursor:pointer; letter-spacing:.07em; transition:all .15s; }
+.esat-go-btn:hover { background:#34d399; color:#000; }
+.esat-iframe-wrap { flex:1; min-height:0; position:relative; }
+.esat-iframe-wrap iframe { width:100%; height:100%; border:none; display:block; background:#111; }
+.esat-gif-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:8px; }
+.esat-gif-card { background:rgba(255,255,255,.03); border:1px solid var(--border2); border-radius:4px; overflow:hidden; }
+.esat-gif-card img { width:100%; display:block; }
+.esat-gif-label { font-family:var(--mono); font-size:8px; color:var(--muted); padding:4px 6px; text-align:center; border-top:1px solid var(--border2); }
+.esat-gif-card a { display:block; }
+.esat-info-box { padding:8px 10px; font-family:var(--mono); font-size:8px; color:var(--muted); line-height:1.6; border-top:1px solid var(--border2); flex-shrink:0; }
+.esat-links { display:flex; gap:10px; flex-wrap:wrap; padding:6px 10px; border-top:1px solid var(--border2); font-family:var(--mono); font-size:8px; flex-shrink:0; }
+.esat-links a { color:#34d399; text-decoration:none; }
+.esat-links a:hover { text-decoration:underline; }
+.esat-noaa-note { color:var(--warn); font-size:8px; font-family:var(--mono); }
 /* ── MODAL (API key setup) ── */
 .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 100; display: flex; align-items: center; justify-content: center; }
 .modal-bg.hidden { display: none; }
@@ -387,6 +435,35 @@ select.fi option { background: var(--panel2); }
 
 @media (max-width: 1050px) { .main { grid-template-columns: 185px 1fr; } .rpanel { display: none; } }
 @media (max-width: 700px)  { .main { grid-template-columns: 1fr; } .sidebar { display: none; } }
+
+/* === MODEL LINKS PANEL === */
+.ml-section { padding: 8px 12px 4px; border-bottom: 1px solid var(--border2); }
+.ml-section-hdr { font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--accent2); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+.ml-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
+.ml-card {
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: 5px;
+  padding: 8px 10px; cursor: pointer; transition: border-color .15s, background .15s;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.ml-card:hover { border-color: var(--accent2); background: rgba(56,189,248,.06); }
+.ml-card-title { font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--bright); }
+.ml-card-body { font-family: var(--mono); font-size: 8px; color: var(--muted); line-height: 1.5; flex: 1; }
+.ml-card-footer { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.ml-tag {
+  font-family: var(--mono); font-size: 7px; padding: 1px 4px; border-radius: 3px;
+  border: 1px solid var(--border2); color: var(--muted); background: rgba(255,255,255,.04);
+}
+.ml-tag-spc  { background: rgba(239,68,68,.12);  color: #f87171; border-color: #ef4444; }
+.ml-tag-emc  { background: rgba(56,189,248,.12); color: #38bdf8; border-color: #38bdf8; }
+.ml-tag-gsl  { background: rgba(52,211,153,.12); color: #34d399; border-color: #34d399; }
+.ml-tag-wpc  { background: rgba(251,146,60,.12); color: #fb923c; border-color: #fb923c; }
+.ml-tag-nssl { background: rgba(251,191,36,.12); color: #fbbf24; border-color: #fbbf24; }
+.ml-ext-link {
+  margin-left: auto; font-family: var(--mono); font-size: 7px;
+  color: var(--accent2); text-decoration: none; white-space: nowrap;
+}
+.ml-ext-link:hover { text-decoration: underline; }
+/* === END MODEL LINKS === */
 </style>
 </head>
 <body>
@@ -539,6 +616,9 @@ select.fi option { background: var(--panel2); }
         <button class="mtab" onclick="showMTab('fronto')">Fronto/Dyn</button>
         <button class="mtab" onclick="showMTab('ens')">Paste-In</button>
         <button class="mtab" onclick="showMTab('text')">Text Prods</button>
+        <button class="mtab" onclick="showMTab('csumLp')" style="color:#a78bfa;font-weight:700">🧠 CSU-MLP</button>
+        <button class="mtab" onclick="showMTab('esat')" style="color:#34d399;font-weight:700">📊 ESAT</button>
+        <button class="mtab" onclick="showMTab('links')" style="color:#60a5fa;font-weight:700">🔗 Model Links</button>
       </div>
       <div class="model-panel active" id="mp-nbm"><div class="model-loading">Click "Load Model Guidance" →</div></div>
       <div class="model-panel" id="mp-hrrr"><div class="model-loading">HRRR/CAM loads with model data →</div></div>
@@ -596,6 +676,222 @@ select.fi option { background: var(--panel2); }
           <span id="ens-saved-status" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:8px"></span>
         </div>
       </div>
+      <div class="model-panel" id="mp-csumLp" style="padding:0;overflow-y:auto">
+        <div id="csu-mlp-container"></div>
+      </div>
+      <div class="model-panel" id="mp-esat" style="padding:0;overflow:hidden;display:flex;flex-direction:column">
+        <div id="esat-container" style="display:flex;flex-direction:column;height:100%"></div>
+      </div>
+
+      <div class="model-panel" id="mp-links" style="padding:0;overflow-y:auto">
+        <div style="padding:10px 12px 6px;font-family:var(--mono);font-size:9px;color:var(--muted);border-bottom:1px solid var(--border2)">
+          External model viewers — open in new tab. Iframes load on click to avoid blocking page load.
+        </div>
+
+        <!-- SECTION: HREF / SREF -->
+        <div class="ml-section">
+          <div class="ml-section-hdr">⚡ CAMs &amp; Ensemble Viewers</div>
+          <div class="ml-grid">
+
+            <div class="ml-card" onclick="mlOpenIframe('SPC HREF','https://spc.noaa.gov/exper/href/')">
+              <div class="ml-card-title">SPC HREF</div>
+              <div class="ml-card-body">High-Resolution Ensemble Framework — SPC viewer. Member blends, paintball, probability fields.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-spc">SPC</span>
+                <span class="ml-tag">Convection</span>
+                <span class="ml-tag">Precip</span>
+                <a href="https://spc.noaa.gov/exper/href/" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+            <div class="ml-card" onclick="mlOpenIframe('EMC HREF','https://mag.ncep.noaa.gov/model-guidance-model-area.php?group=Model%20Guidance&model=href&area=neus&plot=weasd06&fcstd=&cycle=&Submit=Submit')">
+              <div class="ml-card-title">EMC HREF</div>
+              <div class="ml-card-body">HREF on NCEP MAG — full domain and NE US area. Mean, spread, individual members.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-emc">EMC</span>
+                <span class="ml-tag">NE US</span>
+                <a href="https://mag.ncep.noaa.gov/model-guidance-model-area.php?group=Model%20Guidance&model=href&area=neus" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+            <div class="ml-card" onclick="mlOpenIframe('SPC SREF','https://spc.noaa.gov/exper/sref/')">
+              <div class="ml-card-title">SPC SREF</div>
+              <div class="ml-card-body">Short-Range Ensemble Forecast — SPC viewer. 16-member ensemble, days 1–3. Wind, precip, instability.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-spc">SPC</span>
+                <span class="ml-tag">Ensemble</span>
+                <a href="https://spc.noaa.gov/exper/sref/" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+            <div class="ml-card" onclick="mlOpenIframe('SPC SREF Plumes','https://spc.noaa.gov/exper/srefplumes/')">
+              <div class="ml-card-title">SPC SREF Plumes</div>
+              <div class="ml-card-body">SREF plume viewer — time series plots of all members at a point. Good for rapid uncertainty assessment.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-spc">SPC</span>
+                <span class="ml-tag">Plumes</span>
+                <span class="ml-tag">Point</span>
+                <a href="https://spc.noaa.gov/exper/srefplumes/" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION: RRFS -->
+        <div class="ml-section">
+          <div class="ml-section-hdr">🔬 RRFS (Rapid Refresh Forecast System)</div>
+          <div class="ml-grid">
+
+            <div class="ml-card" onclick="mlOpenIframe('EMC RRFS','https://mag.ncep.noaa.gov/model-guidance-model-area.php?group=Model%20Guidance&model=rrfs_a&area=neus')">
+              <div class="ml-card-title">EMC RRFS</div>
+              <div class="ml-card-body">RRFS-A on NCEP MAG. Hourly updates, 3 km, CONUS + NE US domain. Next-gen RAP replacement.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-emc">EMC</span>
+                <span class="ml-tag">3 km</span>
+                <span class="ml-tag">Hourly</span>
+                <a href="https://mag.ncep.noaa.gov/model-guidance-model-area.php?group=Model%20Guidance&model=rrfs_a&area=neus" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+            <div class="ml-card" onclick="mlOpenIframe('GSL RRFS','https://rapidrefresh.noaa.gov/RRFS/')">
+              <div class="ml-card-title">GSL RRFS</div>
+              <div class="ml-card-body">GSL RRFS experimental viewer. Ensemble (RRFS-E) and deterministic runs. Side-by-side model comparison.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-gsl">GSL</span>
+                <span class="ml-tag">Experimental</span>
+                <span class="ml-tag">Ensemble</span>
+                <a href="https://rapidrefresh.noaa.gov/RRFS/" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION: HRRR Suite -->
+        <div class="ml-section">
+          <div class="ml-section-hdr">🌀 HRRR Suite</div>
+          <div class="ml-grid">
+
+            <div class="ml-card" onclick="mlOpenIframe('HRRR (GSL)','https://rapidrefresh.noaa.gov/hrrr/HRRR.cgi')">
+              <div class="ml-card-title">HRRR (GSL)</div>
+              <div class="ml-card-body">GSL operational HRRR viewer. Hourly-updated, 3 km, 48-hr. Full suite of diagnostics including reflectivity, precip type, Q-vectors.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-gsl">GSL</span>
+                <span class="ml-tag">3 km</span>
+                <span class="ml-tag">48hr</span>
+                <a href="https://rapidrefresh.noaa.gov/hrrr/HRRR.cgi" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+            <div class="ml-card" onclick="mlOpenIframe('HRRR Sub-Hourly','https://rapidrefresh.noaa.gov/hrrr/HRRRsubh/Welcome.cgi')">
+              <div class="ml-card-title">HRRR Sub-Hourly</div>
+              <div class="ml-card-body">HRRR 15-minute output. Critical for rapidly evolving convection, lake-effect, and banded precip timing.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-gsl">GSL</span>
+                <span class="ml-tag">15-min</span>
+                <span class="ml-tag">High-Res</span>
+                <a href="https://rapidrefresh.noaa.gov/hrrr/HRRRsubh/Welcome.cgi" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION: Winter / Precip -->
+        <div class="ml-section">
+          <div class="ml-section-hdr">❄️ Winter Weather &amp; Mesoscale Tools</div>
+          <div class="ml-grid">
+
+            <div class="ml-card" onclick="mlOpenIframe('NAM 0–1km &amp; 0–3km AGL','https://mag.ncep.noaa.gov/model-guidance-model-area.php?group=Model%20Guidance&model=nam4km&area=neus')">
+              <div class="ml-card-title">NAM 0–1km &amp; 0–3km AGL</div>
+              <div class="ml-card-body">NAM-HIRES on NCEP MAG. 3 km nest over NE US. Key for wind/shear profiles in the lowest 1–3 km for banding and lake-effect.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-emc">EMC</span>
+                <span class="ml-tag">3 km</span>
+                <span class="ml-tag">Low-Level</span>
+                <a href="https://mag.ncep.noaa.gov/model-guidance-model-area.php?group=Model%20Guidance&model=nam4km&area=neus" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+            <div class="ml-card" onclick="mlOpenIframe('Mesoscale Banding Tool','https://wpc.ncep.noaa.gov/snowbands/')">
+              <div class="ml-card-title">Mesoscale Banding Tool</div>
+              <div class="ml-card-body">WPC snowband probability tool. Identifies frontogenetic banding threat zones using GFS/NAM/ECMWF model data.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-wpc">WPC</span>
+                <span class="ml-tag">Banding</span>
+                <span class="ml-tag">Winter</span>
+                <a href="https://wpc.ncep.noaa.gov/snowbands/" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+            <div class="ml-card" onclick="mlOpenIframe('Warn-on-Forecast (WoFS)','https://wof.nssl.noaa.gov/')">
+              <div class="ml-card-title">Warn-on-Forecast (WoFS)</div>
+              <div class="ml-card-body">NSSL ensemble convective forecast system. Probabilistic severe weather guidance at 3 km / 1hr frequency. Active Apr–Sep.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-nssl">NSSL</span>
+                <span class="ml-tag">Severe</span>
+                <span class="ml-tag">Probabilistic</span>
+                <a href="https://wof.nssl.noaa.gov/" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+            <div class="ml-card" onclick="mlOpenIframe('PW Plots &amp; NAM Forecasts','https://wpc.ncep.noaa.gov/pwpf/pwpf_sfc.shtml')">
+              <div class="ml-card-title">PW Plots &amp; NAM Forecasts</div>
+              <div class="ml-card-body">WPC precipitable water and NAM surface forecast graphics. Useful for antecedent moisture assessment and air mass tracking.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag ml-tag-wpc">WPC</span>
+                <span class="ml-tag">Moisture</span>
+                <span class="ml-tag">NAM</span>
+                <a href="https://wpc.ncep.noaa.gov/pwpf/pwpf_sfc.shtml" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION: Trajectory / Thermo -->
+        <div class="ml-section">
+          <div class="ml-section-hdr">🌬️ Trajectory &amp; ML Tools</div>
+          <div class="ml-grid">
+
+            <div class="ml-card" onclick="mlOpenIframe('HYSPLIT Backward Trajectories','https://ready.arl.noaa.gov/HYSPLIT_traj.php')">
+              <div class="ml-card-title">HYSPLIT Backward Trajectories</div>
+              <div class="ml-card-body">NOAA ARL trajectory model. Run backward trajectories to identify air mass source regions — critical for moisture/thermal origin analysis.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag" style="background:rgba(251,191,36,.15);color:#fbbf24;border-color:#fbbf24">ARL</span>
+                <span class="ml-tag">Trajectories</span>
+                <span class="ml-tag">Air Mass</span>
+                <a href="https://ready.arl.noaa.gov/HYSPLIT_traj.php" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+            <div class="ml-card" onclick="mlOpenIframe('CSU ML Probabilities','https://csu-mlp.cira.colostate.edu/')">
+              <div class="ml-card-title">CSU ML Probabilities</div>
+              <div class="ml-card-body">CSU Machine Learning Probabilities for hazards. Complementary to the dedicated CSU-MLP tab — direct access to the full viewer.</div>
+              <div class="ml-card-footer">
+                <span class="ml-tag" style="background:rgba(167,139,250,.15);color:#a78bfa;border-color:#a78bfa">CSU</span>
+                <span class="ml-tag">ML</span>
+                <span class="ml-tag">Probabilistic</span>
+                <a href="https://csu-mlp.cira.colostate.edu/" target="_blank" class="ml-ext-link" onclick="event.stopPropagation()">↗ New tab</a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- iframe viewer area -->
+        <div id="ml-iframe-area" style="display:none;flex-direction:column;border-top:2px solid var(--border2);margin-top:4px">
+          <div style="display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--bg2);border-bottom:1px solid var(--border2)">
+            <span id="ml-iframe-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);flex:1"></span>
+            <a id="ml-iframe-extlink" href="#" target="_blank" style="font-family:var(--mono);font-size:9px;color:var(--accent2)">↗ Open in new tab</a>
+            <button onclick="mlCloseIframe()" style="font-family:var(--mono);font-size:9px;color:var(--muted);background:none;border:1px solid var(--border2);border-radius:3px;cursor:pointer;padding:2px 6px">✕ Close</button>
+          </div>
+          <iframe id="ml-main-iframe" src="" style="width:100%;height:600px;border:none;background:#fff"></iframe>
+        </div>
+
+      </div>
+
       <div class="model-panel" id="mp-text"><div class="model-loading">Text products load with model data →</div></div>
     </div>
     <div class="rp-sec">
@@ -2295,6 +2591,544 @@ function renderForecastTable(loc) {
 }
 
 
+
+
+// ─── ESAT PANEL ─────────────────────────────────────────────────────────────
+// Ensemble Situational Awareness Table — satable.ncep.noaa.gov
+// Three modes:
+//   1. Quick Look  — animated overview GIFs (NAEFS, D(prog)/DT)
+//   2. NAEFS Table — embedded iframe pre-navigated to BOX CWA
+//   3. ECMWF ESAT  — link only (requires NOAA network login)
+
+let esatMode = 'quicklook';   // 'quicklook' | 'naefs' | 'dprogdt' | 'efi' | 'ecmwf'
+let esatRegion    = 'BOX';
+let esatEfiRegion = 'BOX';
+let esatOutput    = 'percentile';
+let esatIframeLoaded = false;
+
+const ESAT_OUTPUTS = {
+  'anomaly':    'NAEFS Standardized Anomaly',
+  'percentile': 'NAEFS Percentile',
+  'return':     'NAEFS Return Interval',
+  'probs':      'NAEFS Probabilities',
+  'gefs-qpf':  'GEFS M-Climate QPF',
+  'gefs-anom': 'GEFS M-Climate Anomaly',
+  'gefs-pct':  'GEFS M-Climate Percentile',
+  'gefs-ret':  'GEFS M-Climate Return Interval',
+};
+
+// Map our output keys to the satable.ncep.noaa.gov select values
+const ESAT_OUTPUT_MAP = {
+  'anomaly':    'naefs_anomaly',
+  'percentile': 'naefs_percentile',
+  'return':     'naefs_return',
+  'probs':      'naefs_probs',
+  'gefs-qpf':  'gefs_qpf',
+  'gefs-anom': 'gefs_anomaly',
+  'gefs-pct':  'gefs_percentile',
+  'gefs-ret':  'gefs_return',
+};
+
+function renderESATPanel() {
+  const el = document.getElementById('esat-container');
+  if(!el) return;
+
+  // ── Toolbar ──────────────────────────────────────────────────────────────
+  let html = `<div class="esat-toolbar">
+    <span class="esat-title">📊 ESAT</span>
+    <span class="esat-badge">NAEFS 52-member</span>
+    <div class="esat-sep"></div>
+
+    <button class="esat-mode-btn${esatMode==='quicklook'?' active':''}"
+      onclick="esatSetMode('quicklook')">⚡ Quick Look</button>
+    <button class="esat-mode-btn${esatMode==='naefs'?' active':''}"
+      onclick="esatSetMode('naefs')">📋 NAEFS Table</button>
+    <button class="esat-mode-btn${esatMode==='dprogdt'?' active':''}"
+      onclick="esatSetMode('dprogdt')">📈 D(prog)/DT</button>
+    <button class="esat-mode-btn${esatMode==='efi'?' active':''}"
+      onclick="esatSetMode('efi')" style="color:${esatMode==='efi'?'#000':'#fb923c'}">🔥 EFI</button>
+    <button class="esat-mode-btn${esatMode==='ecmwf'?' active':''}"
+      onclick="esatSetMode('ecmwf')">🌐 ECMWF ESAT</button>
+
+    <div class="esat-sep"></div>`;
+
+  if(esatMode === 'naefs') {
+    html += `
+    <label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Region:</label>
+    <select class="esat-region-sel" onchange="esatRegion=this.value">
+      <option value="BOX"${esatRegion==='BOX'?' selected':''}>BOX (Boston)</option>
+      <option value="Northeast U.S."${esatRegion==='Northeast U.S.'?' selected':''}>Northeast US</option>
+      <option value="Continental U.S."${esatRegion==='Continental U.S.'?' selected':''}>CONUS</option>
+      <option value="North America"${esatRegion==='North America'?' selected':''}>N. America</option>
+      <option value="GYX"${esatRegion==='GYX'?' selected':''}>GYX (Gray ME)</option>
+      <option value="ALY"${esatRegion==='ALY'?' selected':''}>ALY (Albany)</option>
+      <option value="OKX"${esatRegion==='OKX'?' selected':''}>OKX (NYC)</option>
+    </select>
+    <label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Output:</label>
+    <select class="esat-output-sel" onchange="esatOutput=this.value">
+      ${Object.entries(ESAT_OUTPUTS).map(([k,v])=>`<option value="${k}"${esatOutput===k?' selected':''}>${v}</option>`).join('')}
+    </select>
+    <button class="esat-go-btn" onclick="esatLoadTable()">▶ Load Table</button>`;
+  }
+
+  if(esatMode === 'efi') {
+    html += `
+    <label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Region:</label>
+    <select class="esat-region-sel" onchange="esatEfiRegion=this.value">
+      <option value="BOX"${esatEfiRegion==='BOX'?' selected':''}>BOX (Boston)</option>
+      <option value="Northeast U.S."${esatEfiRegion==='Northeast U.S.'?' selected':''}>Northeast US</option>
+      <option value="Eastern U.S."${esatEfiRegion==='Eastern U.S.'?' selected':''}>Eastern US</option>
+      <option value="Continental U.S."${esatEfiRegion==='Continental U.S.'?' selected':''}>CONUS</option>
+      <option value="GYX"${esatEfiRegion==='GYX'?' selected':''}>GYX (Gray ME)</option>
+      <option value="ALY"${esatEfiRegion==='ALY'?' selected':''}>ALY (Albany)</option>
+      <option value="OKX"${esatEfiRegion==='OKX'?' selected':''}>OKX (NYC)</option>
+    </select>
+    <div class="esat-sep"></div>
+    <button class="esat-go-btn" style="border-color:#fb923c;color:#fb923c;background:rgba(251,146,60,.12)"
+      onclick="esatLoadEFI('efi')">▶ EFI Table</button>
+    <button class="esat-go-btn" style="border-color:#fb923c;color:#fb923c;background:rgba(251,146,60,.12)"
+      onclick="esatLoadEFI('efi_dprogdt')">📈 EFI D(prog)/DT</button>`;
+  }
+
+  html += `</div>`;
+
+  // ── Content ───────────────────────────────────────────────────────────────
+  if(esatMode === 'quicklook') {
+    html += `<div style="overflow-y:auto;flex:1">
+    <div style="padding:6px 10px 2px;font-family:var(--mono);font-size:8px;color:var(--muted)">
+      Live animated overview products — updated each model cycle. Click any image to open the full interactive table.
+    </div>
+    <div class="esat-gif-grid">
+      <div class="esat-gif-card">
+        <a href="https://satable.ncep.noaa.gov/naefs" target="_blank">
+          <img src="https://satable.ncep.noaa.gov/animated.gif" alt="NAEFS ESAT animated"
+            title="NAEFS Ensemble Situational Awareness Table — click to open full table" />
+        </a>
+        <div class="esat-gif-label">
+          NAEFS ESAT — Animated Overview<br>
+          <span style="color:#34d399">Percentile / Anomaly / Return Interval</span><br>
+          52 members (GEFS 31 + GEPS 21) · Click to open full table
+        </div>
+      </div>
+      <div class="esat-gif-card">
+        <a href="https://satable.ncep.noaa.gov/dprogdt" target="_blank">
+          <img src="https://satable.ncep.noaa.gov/dprogdt_animated.gif" alt="D(prog)/DT animated"
+            title="D(prog)/DT — trend in ensemble probabilities" />
+        </a>
+        <div class="esat-gif-label">
+          D(prog)/DT — Trend in Probabilities<br>
+          <span style="color:var(--accent2)">How fast is ensemble signal changing?</span><br>
+          Increasing = growing confidence · Click to open full tool
+        </div>
+      </div>
+    </div>
+
+    <div class="esat-info-box">
+      <strong style="color:#34d399">What is the ESAT?</strong> The Ensemble Situational Awareness Table displays
+      probabilistic guidance from the 52-member NAEFS (GEFS+GEPS) and GEFS model climate in a compact tabular format.
+      Columns = forecast hours (0–384h). Rows = meteorological fields (Z, T, PW, QPF, MSLP, WIND...).
+      Cell values show how extreme the ensemble forecast is vs. 1979–2009 CFS Reanalysis climatology.<br><br>
+      <strong style="color:var(--accent2)">Key outputs:</strong>
+      <strong style="color:var(--bright)">Percentile</strong> (recommended) — where does the forecast fall vs. climatology?
+      MAX/MIN = outside 1979–2009 record for this week of year. &nbsp;|&nbsp;
+      <strong style="color:var(--bright)">Standardized Anomaly</strong> — sigma units above/below mean. &nbsp;|&nbsp;
+      <strong style="color:var(--bright)">Return Interval</strong> — years between events this extreme. &nbsp;|&nbsp;
+      <strong style="color:var(--bright)">Probabilities</strong> — % of 52 members outside climatology.<br><br>
+      <strong style="color:var(--accent2)">BOX usage:</strong> Select <em>BOX</em> or <em>Northeast US</em> as the table region.
+      Focus on PW (precipitable water), QPF, T850, Z500, and WIND rows for WFO BOX hazard situations.
+      Red/MAX values = historic extreme — write it up.
+    </div>
+
+    <div class="esat-links">
+      <a href="https://satable.ncep.noaa.gov/naefs" target="_blank">▶ Open NAEFS ESAT</a>
+      <a href="https://satable.ncep.noaa.gov/efi/" target="_blank">🔥 EFI Table (public)</a>
+      <a href="https://satable.ncep.noaa.gov/efi_dprogdt" target="_blank">📈 EFI D(prog)/DT</a>
+      <a href="https://satable.ncep.noaa.gov/dprogdt" target="_blank">📈 NAEFS D(prog)/DT</a>
+      <a href="https://satable.ncep.noaa.gov/ecmwf" target="_blank">🌐 ECMWF ESAT (NOAA login)</a>
+      <a href="https://satable.ncep.noaa.gov/archive" target="_blank">📁 Archive</a>
+      <span class="esat-noaa-note">⚠ ECMWF ESAT requires NOAA network — VPN or AWIPS</span>
+    </div>
+    </div>`;
+
+  } else if(esatMode === 'naefs') {
+    // Embedded iframe — the table at /naefs loads the interactive AJAX table
+    // We use a placeholder until the user clicks "Load Table"
+    html += `<div class="esat-iframe-wrap" style="flex:1;min-height:400px">
+      <div id="esat-iframe-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--muted);font-family:var(--mono);font-size:9px">
+        <div style="font-size:24px;margin-bottom:8px">📋</div>
+        Select region and output above, then click <strong style="color:#34d399">▶ Load Table</strong><br>
+        <span style="margin-top:4px;color:rgba(255,255,255,.3)">
+          Table will open embedded below. For full interactivity, use the external link.
+        </span>
+        <a href="https://satable.ncep.noaa.gov/naefs" target="_blank"
+          style="margin-top:10px;color:#34d399;font-size:8px">→ Open directly in new tab ↗</a>
+      </div>
+      <iframe id="esat-iframe" src="" style="display:none;width:100%;height:600px;border:none;background:#fff"
+        title="ESAT Interactive Table"></iframe>
+    </div>
+    <div class="esat-links">
+      <a href="https://satable.ncep.noaa.gov/naefs" target="_blank">▶ Open in new tab (recommended for full interactivity)</a>
+      <a href="https://satable.ncep.noaa.gov/ecmwf" target="_blank">🌐 ECMWF ESAT (NOAA login required)</a>
+      <span class="esat-noaa-note">⚠ If table shows login wall, open in new tab instead</span>
+    </div>`;
+
+  } else if(esatMode === 'dprogdt') {
+    html += `<div style="overflow-y:auto;flex:1">
+    <div style="padding:6px 10px 2px;font-family:var(--mono);font-size:8px;color:var(--muted)">
+      D(prog)/DT — rate of change in ensemble extreme probabilities across consecutive model runs.
+      Growing values = ensemble rapidly gaining confidence in an extreme event.
+    </div>
+    <div class="esat-gif-grid" style="grid-template-columns:1fr">
+      <div class="esat-gif-card">
+        <a href="https://satable.ncep.noaa.gov/dprogdt" target="_blank">
+          <img src="https://satable.ncep.noaa.gov/dprogdt_animated.gif" alt="D(prog)/DT"
+            style="max-width:100%" />
+        </a>
+        <div class="esat-gif-label">
+          D(prog)/DT animated — trend in NAEFS extreme probabilities<br>
+          <span style="color:var(--accent2)">Red = probability increasing (confidence growing) · Blue = decreasing</span>
+        </div>
+      </div>
+    </div>
+    <div class="esat-info-box">
+      <strong style="color:#34d399">D(prog)/DT interpretation:</strong>
+      Each cell shows the change in extreme probability (%) from the previous model run.
+      Large positive values (red) mean the ensemble is rapidly becoming more confident in an extreme event —
+      a key signal to watch for potential watches/warnings.
+      Negative values (blue) mean the signal is weakening.<br><br>
+      <strong>For WFO BOX:</strong> Watch PW, QPF, and WIND rows for Northeast US region.
+      A D(prog)/DT spike in QPF + PW simultaneously is a strong flash flood precursor signal.
+    </div>
+    <div class="esat-links">
+      <a href="https://satable.ncep.noaa.gov/dprogdt" target="_blank">▶ Open full D(prog)/DT tool</a>
+    </div>
+    </div>`;
+
+  } else if(esatMode === 'efi') {
+    html += `<div style="display:flex;flex-direction:column;flex:1;overflow-y:auto">
+
+    <div style="padding:6px 10px 4px;font-family:var(--mono);font-size:8px;color:var(--muted)">
+      ECMWF Extreme Forecast Index (EFI) — publicly accessible (no NOAA login required).
+      Values range −1 to +1: <strong style="color:#fb923c">|EFI| ≥ 0.5</strong> = noteworthy extreme;
+      <strong style="color:#ef4444">|EFI| ≥ 0.8</strong> = significant extreme vs. model climate.
+    </div>
+
+    <div id="efi-iframe-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;color:var(--muted);font-family:var(--mono);font-size:9px;border-bottom:1px solid var(--border2)">
+      <div style="font-size:28px;margin-bottom:8px">🔥</div>
+      Select region above, then click <strong style="color:#fb923c">▶ EFI Table</strong> or <strong style="color:#fb923c">📈 EFI D(prog)/DT</strong><br>
+      <a href="https://satable.ncep.noaa.gov/efi/" target="_blank"
+        style="margin-top:10px;color:#fb923c;font-size:8px">→ Open EFI directly in new tab ↗</a>
+    </div>
+    <iframe id="efi-iframe" src="" style="display:none;width:100%;height:600px;border:none;background:#fff"
+      title="EFI ESAT Table"></iframe>
+
+    <div style="padding:8px 10px;font-family:var(--mono);font-size:8px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border2)">
+      <strong style="color:#fb923c">EFI Interpretation Guide:</strong><br>
+      The EFI compares the current ECMWF ENS forecast to the model's own climate (M-Climate, 1600 past forecasts at the same lead time and season). Unlike NAEFS percentile which compares to observed climatology, EFI answers: <em>"Is the model forecasting something unusual even for itself?"</em><br><br>
+      <strong style="color:var(--bright)">Key thresholds:</strong>
+      <span style="color:var(--muted)">±0.3–0.5</span> = Somewhat unusual &nbsp;|&nbsp;
+      <span style="color:#fb923c">±0.5–0.8</span> = Noteworthy extreme &nbsp;|&nbsp;
+      <span style="color:#ef4444">±0.8–1.0</span> = Highly unusual — high confidence in extreme<br><br>
+      <strong style="color:var(--bright)">Shift of Tails (SOT):</strong> Shown alongside EFI. SOT quantifies whether the extreme signal is driven by the entire distribution shifting (moderate SOT) vs. just the tail members (high SOT). High EFI + high SOT = very confident extreme event signal.<br><br>
+      <strong style="color:var(--accent2)">WFO BOX fields to watch:</strong>
+      <strong>2T</strong> (2m Temp) · <strong>MX2T/MN2T</strong> (daily hi/lo) · <strong>TP</strong> (total precip/QPF) ·
+      <strong>10FF</strong> (wind) · <strong>10FG</strong> (gust) · <strong>SD</strong> (snow depth) · <strong>CAPE</strong> (convective)<br><br>
+      <strong style="color:#fb923c">EFI D(prog)/DT:</strong> Shows how EFI values are trending across consecutive runs.
+      Click a value to see a loop of how the EFI evolved as the valid time approached — essential for tracking whether confidence in an extreme is growing or collapsing.
+    </div>
+
+    <div class="esat-links">
+      <a href="https://satable.ncep.noaa.gov/efi/" target="_blank">▶ Open EFI Table in new tab</a>
+      <a href="https://satable.ncep.noaa.gov/efi_dprogdt" target="_blank">📈 EFI D(prog)/DT in new tab</a>
+      <a href="https://confluence.ecmwf.int/display/FUG/Section+8.1.9.2+Extreme+Forecast+Index+-+EFI" target="_blank">📖 ECMWF EFI documentation</a>
+      <a href="https://www.ecmwf.int/assets/elearning/efi/efi1/story_html5.html" target="_blank">🎓 EFI tutorial (ECMWF)</a>
+    </div>
+    </div>`;
+
+  } else if(esatMode === 'ecmwf') {
+    html += `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:24px;text-align:center">
+      <div style="font-size:36px;margin-bottom:12px">🌐</div>
+      <div style="font-family:var(--cond);font-size:14px;font-weight:700;color:#34d399;letter-spacing:.1em;margin-bottom:8px">
+        ECMWF ESAT
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);max-width:380px;line-height:1.6;margin-bottom:16px">
+        The ECMWF Ensemble Situational Awareness Table shows ECMWF ENS anomalies, percentiles, 
+        and return intervals — including the powerful <strong style="color:var(--bright)">Extreme Forecast Index (EFI)</strong>
+        and <strong style="color:var(--bright)">Shift of Tails (SOT)</strong> products.<br><br>
+        <span class="esat-noaa-note">⚠ Requires NOAA network or NWS credentials to access.</span><br>
+        Use your AWIPS workstation or NWS VPN, then open the link below.
+      </div>
+      <a href="https://satable.ncep.noaa.gov/ecmwf" target="_blank"
+        style="font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.1em;padding:8px 20px;border:1px solid #34d399;border-radius:4px;color:#34d399;text-decoration:none;background:rgba(52,211,153,.1)">
+        → Open ECMWF ESAT ↗
+      </a>
+      <div style="margin-top:20px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.25)">
+        The ECMWF animated GIF is also login-restricted and cannot be embedded here.
+      </div>
+    </div>`;
+  }
+
+  html += `</div>`;  // close esat-container content
+  el.innerHTML = html;
+}
+
+function esatSetMode(mode) {
+  esatMode = mode;
+  renderESATPanel();
+}
+
+function esatLoadEFI(which) {
+  // which = 'efi' | 'efi_dprogdt'
+  const iframe = document.getElementById('efi-iframe');
+  const placeholder = document.getElementById('efi-iframe-placeholder');
+  if(!iframe) return;
+  iframe.src = `https://satable.ncep.noaa.gov/${which}/`;
+  iframe.style.display = 'block';
+  if(placeholder) placeholder.style.display = 'none';
+  const label = which === 'efi_dprogdt' ? 'EFI D(prog)/DT' : 'EFI Table';
+  showToast(`${label} loaded — select "${esatEfiRegion}" from Table Region, then click View Table`);
+}
+
+function esatLoadTable() {
+  // Build the iframe URL — the ESAT table at /naefs accepts no direct URL params
+  // for pre-selection (it's all JavaScript-driven), so we load the base URL
+  // and show a note to manually select BOX
+  const iframe = document.getElementById('esat-iframe');
+  const placeholder = document.getElementById('esat-iframe-placeholder');
+  if(!iframe) return;
+
+  // Load the NAEFS page
+  iframe.src = 'https://satable.ncep.noaa.gov/naefs';
+  iframe.style.display = 'block';
+  if(placeholder) placeholder.style.display = 'none';
+
+  // Show a brief overlay hint
+  showToast(`ESAT loaded — select "${esatRegion}" from the Table Region dropdown, choose output type, then click View Table`);
+}
+
+// ─── CSU-MLP PANEL ──────────────────────────────────────────────────────────
+// Builds image URLs for CSU Machine Learning Probabilities products.
+// Products are PNG images served from CSU's public archive — no API/CORS needed.
+//
+// URL pattern:
+//  Base: https://schumacher.atmos.colostate.edu/weather/csu_mlp/archive/
+//  ExQPF: csu_mlp_gefso_2022_day{N}/{YYYYMMDD}{hh}/csu_ari_ml_gefso_day{N}_{MMDD}{run}.png
+//  Severe: severe_gefso_2021_day{N}/{YYYYMMDD}{hh}/severe_ml_day{N}[_all]_gefso_{MMDD}{run}.png
+//  6-panel: uses day1 folder, filename = {product}_{MMDD}{run}.png
+//
+// run = '12' (12Z init) or '00' (00Z init)
+
+const CSU_BASE = 'https://schumacher.atmos.colostate.edu/weather/csu_mlp/archive';
+
+let csuState = {
+  mode:   'exqpf',   // 'exqpf' | 'severe' | 'sixpanel'
+  day:    1,
+  init:   '12',      // '00' or '12'
+  sixpanelType: 'exqpf_ari',  // 'exqpf_ari'|'exqpf_ufvs'|'severe_d12'|'severe_d38'
+};
+
+function csuDateStrings() {
+  // Build date strings based on current UTC date and selected init
+  const now   = new Date();
+  const utcH  = now.getUTCHours();
+  // If user chose 12Z but it's before 14Z (12Z+2h for processing), step back a day
+  const useToday = csuState.init === '00' || utcH >= 14;
+  const base  = new Date(now);
+  if(!useToday) base.setUTCDate(base.getUTCDate() - 1);
+
+  const pad2  = n => String(n).padStart(2, '0');
+  const Y     = base.getUTCFullYear();
+  const M     = pad2(base.getUTCMonth() + 1);
+  const D     = pad2(base.getUTCDate());
+  const init8 = `${Y}${M}${D}`;        // e.g. "20260313"
+  const initHH = csuState.init === '12' ? '12' : '00';
+  const initFolder = `${init8}${initHH}`;  // e.g. "2026031312"
+
+  // Target date = init date + day offset
+  const target = new Date(base);
+  target.setUTCDate(target.getUTCDate() + csuState.day);
+  const TM = pad2(target.getUTCMonth() + 1);
+  const TD = pad2(target.getUTCDate());
+  const targetMMDD = `${TM}${TD}`;     // e.g. "0314"
+
+  // 6-panel uses init date MMDD (not target)
+  const initMMDD = `${M}${D}`;
+
+  return { initFolder, targetMMDD, initMMDD, initHH };
+}
+
+function csuBuildUrl() {
+  const { initFolder, targetMMDD, initMMDD, initHH } = csuDateStrings();
+  const day = csuState.day;
+  const run = initHH;   // '12' or '00'
+
+  if(csuState.mode === 'sixpanel') {
+    const t = csuState.sixpanelType;
+    if(t === 'severe_d12') {
+      return `${CSU_BASE}/severe_gefso_2021_day1/${initFolder}/hazards_fcst_6panel_${initMMDD}${run}.png`;
+    } else if(t === 'severe_d38') {
+      return `${CSU_BASE}/severe_gefso_2021_day1/${initFolder}/severe_fcst_6panel_${initMMDD}${run}.png`;
+    } else if(t === 'exqpf_ufvs') {
+      return `${CSU_BASE}/csu_mlp_gefso_2022_day1/${initFolder}/exqpf_fcst_6panel_ufvs_${initMMDD}${run}.png`;
+    } else {
+      // exqpf_ari default
+      return `${CSU_BASE}/csu_mlp_gefso_2022_day1/${initFolder}/exqpf_fcst_6panel_trad_${initMMDD}${run}.png`;
+    }
+  }
+
+  if(csuState.mode === 'severe') {
+    const allTag = day <= 2 ? '_all' : '';
+    return `${CSU_BASE}/severe_gefso_2021_day${day}/${initFolder}/severe_ml_day${day}${allTag}_gefso_${targetMMDD}${run}.png`;
+  }
+
+  // exqpf (default)
+  return `${CSU_BASE}/csu_mlp_gefso_2022_day${day}/${initFolder}/csu_ari_ml_gefso_day${day}_${targetMMDD}${run}.png`;
+}
+
+function csuCaption() {
+  const { initFolder, targetMMDD, initHH } = csuDateStrings();
+  const initStr = `${initFolder.slice(0,4)}-${initFolder.slice(4,6)}-${initFolder.slice(6,8)} ${initHH}Z`;
+  if(csuState.mode === 'sixpanel') {
+    const labels = {
+      exqpf_ari:  'Excessive Rainfall ARI — 6-panel medium range',
+      exqpf_ufvs: 'Excessive Rainfall UFVS — 6-panel medium range',
+      severe_d12: 'Severe Hazards Days 1-2 — 6-panel',
+      severe_d38: 'Severe Hazards Days 3-8 — 6-panel',
+    };
+    return `${labels[csuState.sixpanelType]||''} · Init ${initStr}`;
+  }
+  const modeLabel = csuState.mode === 'severe' ? 'Severe Weather ML' : 'Excessive Rainfall (ARI) ML';
+  const target = `${targetMMDD.slice(0,2)}/${targetMMDD.slice(2)}`;
+  return `${modeLabel} · Day ${csuState.day} · Valid ${target}Z · Init ${initStr} · GEFS-based`;
+}
+
+function renderCSUPanel() {
+  const el = document.getElementById('csu-mlp-container');
+  if(!el) return;
+
+  const maxDay = csuState.mode === 'sixpanel' ? 1 : 8;
+  const dayRange = csuState.mode === 'sixpanel' ? [] : Array.from({length: maxDay}, (_, i) => i+1);
+
+  // --- Toolbar ---
+  let html = `<div class="csu-toolbar">
+    <span class="csu-toolbar-title">🧠 CSU-MLP</span>
+    <span class="csu-badge">Random Forest</span>
+    <div class="csu-sep"></div>
+
+    <div class="csu-tab-group">
+      <button class="csu-tab${csuState.mode==='exqpf'?' active':''}"
+        onclick="csuSetMode('exqpf')">⛈ Excessive Rainfall</button>
+      <button class="csu-tab${csuState.mode==='severe'?' active':''}"
+        onclick="csuSetMode('severe')">🌪 Severe Wx</button>
+      <button class="csu-tab${csuState.mode==='sixpanel'?' active':''}"
+        onclick="csuSetMode('sixpanel')">🗂 6-Panel</button>
+    </div>
+
+    <div class="csu-sep"></div>`;
+
+  if(csuState.mode === 'sixpanel') {
+    // 6-panel sub-type selector
+    const panels = [
+      {k:'exqpf_ari',  l:'ExQPF ARI'},
+      {k:'exqpf_ufvs', l:'ExQPF UFVS'},
+      {k:'severe_d12', l:'Severe D1-2'},
+      {k:'severe_d38', l:'Severe D3-8'},
+    ];
+    html += `<div class="csu-day-btns">`;
+    panels.forEach(p => {
+      html += `<button class="csu-day-btn${csuState.sixpanelType===p.k?' active':''}"
+        onclick="csuSet6Panel('${p.k}')">${p.l}</button>`;
+    });
+    html += `</div>`;
+  } else {
+    // Day selector
+    html += `<div class="csu-day-btns">`;
+    dayRange.forEach(d => {
+      const lbl = d <= 3 ? `D${d}` : `D${d}`;
+      const dimmed = d >= 4 ? ' style="opacity:.7"' : '';
+      html += `<button class="csu-day-btn${csuState.day===d?' active':''}"
+        onclick="csuSetDay(${d})"${dimmed}>${lbl}</button>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="csu-sep"></div>
+    <select class="csu-init-sel" onchange="csuSetInit(this.value)">
+      <option value="12"${csuState.init==='12'?' selected':''}>12Z Init</option>
+      <option value="00"${csuState.init==='00'?' selected':''}>00Z Init</option>
+    </select>
+
+    <span style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-left:4px">
+      Images load from CSU servers
+    </span>
+  </div>`;
+
+  // --- Image ---
+  const imgUrl = csuBuildUrl();
+  const caption = csuCaption();
+
+  // Try 12Z, fall back to 00Z automatically via onerror
+  const fallbackUrl = imgUrl.replace(/12\.png$/, '00.png').replace(/00\.png$/, '12.png');
+
+  html += `<div class="csu-img-wrap">
+    <img id="csu-main-img" src="${imgUrl}"
+      onerror="csuHandleImgError(this, '${fallbackUrl}')"
+      alt="CSU-MLP ${csuState.mode} Day ${csuState.day}"
+      title="${caption}" />
+    <div class="csu-img-caption" id="csu-caption">${caption}</div>
+    <div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.2);margin-top:3px;text-align:center;word-break:break-all">${imgUrl}</div>
+  </div>
+
+  <div style="padding:0 8px 8px;font-family:var(--mono);font-size:8px;color:var(--muted);line-height:1.5">
+    <strong style="color:var(--accent2)">Product guide:</strong>
+    ${csuState.mode === 'exqpf' ?
+      'ML probabilities of <strong>excessive rainfall</strong> (flash flood-producing) based on GEFS ensemble + random forest postprocessing. ' +
+      'Calibrated against historical ARI (Annual Recurrence Interval) exceedances. ' +
+      'Left panel = ML probabilities; Right panel = WPC Excessive Rainfall Outlook (ERO). ' +
+      'Day 1-3 are most reliable; Days 4-8 use GEFS medium-range.' :
+    csuState.mode === 'severe' ?
+      'ML probabilities of <strong>severe weather hazards</strong> (tornado, hail, wind) based on GEFS + random forest. ' +
+      'Days 1-2 show individual hazard types (tornado/hail/wind/all). ' +
+      'Days 3-8 show aggregate severe probability. Calibrated against SPC storm reports.' :
+      '<strong>6-panel medium-range</strong> view showing Days 1-8 at a glance. ' +
+      'ARI = Annual Recurrence Interval exceedance probabilities. ' +
+      'UFVS = Unified Forecast Verification System calibrated variant.'}
+  </div>`;
+
+  // Link to full site
+  html += `<div style="padding:0 8px 10px">
+    <a href="https://schumacher.atmos.colostate.edu/hilla/csu_mlp/index.php" target="_blank"
+      style="font-family:var(--mono);font-size:8px;color:var(--accent2);text-decoration:none">
+      → Open full CSU-MLP site ↗
+    </a>
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+function csuHandleImgError(img, fallback) {
+  if(img.src !== fallback && !img.dataset.tried) {
+    img.dataset.tried = '1';
+    img.src = fallback;
+    const cap = document.getElementById('csu-caption');
+    if(cap) cap.textContent += ' (using fallback init time)';
+  } else {
+    img.style.display = 'none';
+    img.insertAdjacentHTML('afterend',
+      '<div class="csu-err">⚠ Image not available for this date/init. ' +
+      'Try a different init time or day. Products are typically available by ~14Z (12Z init) or ~08Z (00Z init).</div>');
+  }
+}
+
+function csuSetMode(mode) {
+  csuState.mode = mode;
+  if(mode === 'sixpanel') csuState.day = 1;
+  renderCSUPanel();
+}
+function csuSetDay(d) { csuState.day = d; renderCSUPanel(); }
+function csuSetInit(v) { csuState.init = v; renderCSUPanel(); }
+function csuSet6Panel(t) { csuState.sixpanelType = t; renderCSUPanel(); }
+
 // ─── GFS PANEL RENDERER ──────────────────────────────────────────────────────
 function renderGFSPanel() {
   const pts = liveData.gfs || {};
@@ -2702,10 +3536,12 @@ function renderTextPanel() {
 }
 
 function showMTab(id) {
-  const ids = ['nbm','hrrr','gfs','gefs','fcst','mos','snd','fronto','ens','text'];
+  const ids = ['nbm','hrrr','gfs','gefs','fcst','mos','snd','fronto','ens','text','csumLp','esat'];
   document.querySelectorAll('.mtab').forEach((t,i) => t.classList.toggle('active', ids[i]===id));
   document.querySelectorAll('.model-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('mp-'+id).classList.add('active');
+  if(id === 'csumLp') renderCSUPanel();
+  if(id === 'esat')   renderESATPanel();
 }
 
 function saveEnsembleInput() {
@@ -3258,6 +4094,28 @@ document.addEventListener('modelLoaded', () => {
 setTimeout(()=>{
   if(!apiKey) document.getElementById('modal-bg').classList.remove('hidden');
 }, 800);
+
+// === MODEL LINKS ===
+function mlOpenIframe(title, url) {
+  const area = document.getElementById('ml-iframe-area');
+  const iframe = document.getElementById('ml-main-iframe');
+  const titleEl = document.getElementById('ml-iframe-title');
+  const extlink = document.getElementById('ml-iframe-extlink');
+  if (!area || !iframe) return;
+  iframe.src = url;
+  if (titleEl) titleEl.textContent = title;
+  if (extlink) extlink.href = url;
+  area.style.display = 'flex';
+  area.scrollIntoView({ behavior: 'smooth' });
+}
+function mlCloseIframe() {
+  const area = document.getElementById('ml-iframe-area');
+  const iframe = document.getElementById('ml-main-iframe');
+  if (area) area.style.display = 'none';
+  if (iframe) iframe.src = '';
+}
+// === END MODEL LINKS ===
+
 </script>
 </body>
 </html>
