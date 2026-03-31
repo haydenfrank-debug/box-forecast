@@ -513,6 +513,116 @@ select.fi option { background: var(--panel2); }
 }
 .prob-loc-btn.active { background: rgba(56,189,248,.2); border-color: var(--accent2); color: var(--bright); }
 /* === END PROB TABLE === */
+
+/* ===== SHIFT BRIEFING ===== */
+.brief-header { padding:8px 12px 4px; border-bottom:1px solid var(--border2); }
+.brief-title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--bright); }
+.brief-time  { font-family:var(--mono); font-size:8px; color:var(--muted); }
+.brief-section { margin:0; padding:6px 12px 4px; border-bottom:1px solid var(--border2); }
+.brief-section-hdr { font-family:var(--mono); font-size:8px; font-weight:700; color:var(--accent2);
+  letter-spacing:.07em; text-transform:uppercase; margin-bottom:4px; }
+.brief-row { font-family:var(--mono); font-size:9px; color:var(--bright); line-height:1.6; }
+.brief-row .lbl { color:var(--muted); }
+.brief-row .val-hi  { color:#ef4444; font-weight:700; }
+.brief-row .val-med { color:#fb923c; font-weight:700; }
+.brief-row .val-low { color:#fbbf24; }
+.brief-gen-btn { font-family:var(--mono); font-size:8px; padding:4px 12px;
+  background:rgba(240,171,252,.15); border:1px solid #f0abfc; border-radius:4px;
+  color:#f0abfc; cursor:pointer; margin:6px 12px; }
+.brief-gen-btn:hover { background:rgba(240,171,252,.28); }
+.brief-ai-out { font-family:var(--mono); font-size:9px; color:var(--bright);
+  white-space:pre-wrap; padding:10px 12px; line-height:1.6; }
+.brief-decision-pt { display:flex; align-items:flex-start; gap:6px; padding:3px 0;
+  font-family:var(--mono); font-size:9px; }
+.brief-dp-icon { font-size:11px; flex-shrink:0; }
+.brief-dp-txt { color:var(--bright); line-height:1.5; }
+.brief-dp-time { color:var(--muted); font-size:8px; }
+
+/* ===== WWA DECISION SUPPORT ===== */
+.wwa-header { padding:8px 12px 6px; border-bottom:1px solid var(--border2); }
+.wwa-title  { font-family:var(--mono); font-size:11px; font-weight:700; color:#f87171; }
+.wwa-subtitle { font-family:var(--mono); font-size:8px; color:var(--muted); }
+.wwa-zone-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:6px; padding:8px 10px; }
+.wwa-zone-card { background:var(--bg2); border:1px solid var(--border2); border-radius:5px;
+  padding:6px 8px; font-family:var(--mono); font-size:8px; }
+.wwa-zone-name { font-size:9px; font-weight:700; color:var(--bright); margin-bottom:4px; }
+.wwa-crit-row  { display:flex; align-items:center; gap:5px; padding:1px 0; line-height:1.4; }
+.wwa-crit-icon { font-size:10px; flex-shrink:0; }
+.wwa-crit-lbl  { color:var(--muted); flex:1; }
+.wwa-crit-val  { font-weight:700; }
+.wwa-crit-hit  { color:#ef4444; }
+.wwa-crit-near { color:#fb923c; }
+.wwa-crit-ok   { color:var(--muted); }
+.wwa-badge     { display:inline-block; padding:1px 5px; border-radius:3px; font-size:7px;
+  font-weight:700; letter-spacing:.05em; margin-left:4px; }
+.wwa-badge-wsw { background:rgba(239,68,68,.2);  color:#ef4444; border:1px solid #ef4444; }
+.wwa-badge-ww  { background:rgba(251,191,36,.2); color:#fbbf24; border:1px solid #fbbf24; }
+.wwa-badge-sca { background:rgba(56,189,248,.2); color:#38bdf8; border:1px solid #38bdf8; }
+.wwa-badge-bliz{ background:rgba(167,139,250,.2);color:#a78bfa; border:1px solid #a78bfa; }
+.wwa-badge-ok  { background:rgba(163,230,53,.1); color:#a3e635; border:1px solid #a3e635; }
+.wwa-summary   { padding:8px 12px; font-family:var(--mono); font-size:9px;
+  border-bottom:1px solid var(--border2); }
+.wwa-issuance-hdr { font-family:var(--mono); font-size:8px; font-weight:700; color:#f87171;
+  letter-spacing:.07em; text-transform:uppercase; margin-bottom:4px; }
+.wwa-issue-item { display:flex; align-items:center; gap:6px; padding:2px 0; }
+.wwa-issue-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+/* ===== MARINE PANEL ===== */
+.marine-section { padding:8px 12px 4px; border-bottom:1px solid var(--border2); }
+.marine-section-hdr { font-family:var(--mono); font-size:8px; font-weight:700; color:#38bdf8;
+  letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
+.marine-buoy-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:5px; }
+.marine-buoy-card { background:var(--bg2); border:1px solid var(--border2); border-radius:4px;
+  padding:6px 8px; font-family:var(--mono); font-size:8px; }
+.marine-buoy-id   { font-size:9px; font-weight:700; color:#38bdf8; }
+.marine-buoy-name { font-size:7px; color:var(--muted); margin-bottom:3px; }
+.marine-buoy-row  { display:flex; justify-content:space-between; color:var(--bright); padding:1px 0; }
+.marine-buoy-lbl  { color:var(--muted); }
+.marine-load-btn  { font-family:var(--mono); font-size:8px; padding:4px 12px;
+  background:rgba(56,189,248,.15); border:1px solid #38bdf8; border-radius:4px;
+  color:#38bdf8; cursor:pointer; margin:6px 12px; }
+.marine-load-btn:hover { background:rgba(56,189,248,.28); }
+.marine-zone-badge { display:inline-block; font-family:var(--mono); font-size:7px;
+  padding:1px 4px; border-radius:2px; background:rgba(56,189,248,.12);
+  border:1px solid rgba(56,189,248,.3); color:#38bdf8; margin:1px; }
+
+/* ===== SOUNDING DIAGNOSTICS ===== */
+.snd-diag-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:4px; padding:6px 10px; }
+.snd-diag-card { background:var(--bg2); border:1px solid var(--border2); border-radius:4px;
+  padding:5px 7px; font-family:var(--mono); font-size:8px; }
+.snd-diag-title { font-size:7px; color:var(--muted); letter-spacing:.05em;
+  text-transform:uppercase; margin-bottom:2px; }
+.snd-diag-val   { font-size:11px; font-weight:700; color:var(--bright); }
+.snd-diag-sub   { font-size:7px; color:var(--muted); margin-top:1px; }
+.snd-diag-flag  { display:inline-block; padding:1px 4px; border-radius:2px; font-size:7px;
+  font-weight:700; margin-top:2px; }
+.snd-flag-warn  { background:rgba(251,146,60,.2); color:#fb923c; border:1px solid #fb923c; }
+.snd-flag-alert { background:rgba(239,68,68,.2);  color:#ef4444; border:1px solid #ef4444; }
+.snd-flag-ok    { background:rgba(163,230,53,.1); color:#a3e635; border:1px solid #a3e635; }
+
+/* ===== VERIFICATION ===== */
+.verify-header  { padding:8px 12px 4px; border-bottom:1px solid var(--border2); }
+.verify-title   { font-family:var(--mono); font-size:11px; font-weight:700; color:#a3e635; }
+.verify-tbl     { border-collapse:collapse; width:100%; font-family:var(--mono); font-size:8px; }
+.verify-tbl th  { background:var(--bg2); color:var(--accent2); font-size:7px; font-weight:700;
+  padding:4px 8px; border-bottom:2px solid var(--border2); text-align:left;
+  letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; }
+.verify-tbl td  { padding:3px 8px; border-bottom:1px solid var(--border2); color:var(--bright); }
+.verify-tbl tr:hover td { background:rgba(255,255,255,.03); }
+.verify-err-pos { color:#ef4444; }
+.verify-err-neg { color:#38bdf8; }
+.verify-err-ok  { color:#a3e635; }
+.verify-log-btn { font-family:var(--mono); font-size:8px; padding:3px 10px;
+  background:rgba(163,230,53,.12); border:1px solid #a3e635; border-radius:3px;
+  color:#a3e635; cursor:pointer; }
+.verify-log-btn:hover { background:rgba(163,230,53,.25); }
+.verify-score-bar { height:4px; border-radius:2px; background:rgba(255,255,255,.08);
+  overflow:hidden; margin-top:2px; }
+.verify-score-fill { height:100%; border-radius:2px; background:var(--accent2); }
+/* ===== END NEW CSS ===== */
 </style>
 </head>
 <body>
@@ -668,6 +778,10 @@ select.fi option { background: var(--panel2); }
         <button class="mtab" onclick="showMTab('csumLp')" style="color:#a78bfa;font-weight:700">🧠 CSU-MLP</button>
         <button class="mtab" onclick="showMTab('esat')" style="color:#34d399;font-weight:700">📊 ESAT</button>
         <button class="mtab" onclick="showMTab('links')" style="color:#60a5fa;font-weight:700">🔗 Model Links</button>
+        <button class="mtab" onclick="showMTab('brief')" style="color:#f0abfc;font-weight:700">📋 Shift Brief</button>
+        <button class="mtab" onclick="showMTab('wwa')" style="color:#f87171;font-weight:700">🚨 WWA</button>
+        <button class="mtab" onclick="showMTab('marine')" style="color:#38bdf8;font-weight:700">🌊 Marine</button>
+        <button class="mtab" onclick="showMTab('verify')" style="color:#a3e635;font-weight:700">✅ Verify</button>
       </div>
       <div class="model-panel active" id="mp-nbm"><div class="model-loading">Click "Load Model Guidance" →</div></div>
       <div class="model-panel" id="mp-hrrr"><div class="model-loading">HRRR/CAM loads with model data →</div></div>
@@ -948,6 +1062,18 @@ select.fi option { background: var(--panel2); }
 
       </div>
 
+      <div class="model-panel" id="mp-brief" style="padding:0;overflow-y:auto">
+        <div id="brief-container"><div class="model-loading">Shift briefing generates with model data →</div></div>
+      </div>
+      <div class="model-panel" id="mp-wwa" style="padding:0;overflow-y:auto">
+        <div id="wwa-container"><div class="model-loading">WWA decision support loads with model data →</div></div>
+      </div>
+      <div class="model-panel" id="mp-marine" style="padding:0;overflow-y:auto">
+        <div id="marine-container"><div class="model-loading">Marine panel — click Load to fetch buoy obs →</div></div>
+      </div>
+      <div class="model-panel" id="mp-verify" style="padding:0;overflow-y:auto">
+        <div id="verify-container"><div class="model-loading">Verification log →</div></div>
+      </div>
       <div class="model-panel" id="mp-text"><div class="model-loading">Text products load with model data →</div></div>
     </div>
     <div class="rp-sec">
@@ -2002,14 +2128,94 @@ async function fetchSounding(station) {
       l300  ? `300mb: ${l300.temp}°C  ${l300.wdir}°@${l300.wspd}kt  ${l300.hght}m` : '',
     ].filter(Boolean).join('\n');
 
+    // ── Enhanced BOX diagnostics ──────────────────────────────────────────
+    // DGZ depth: layer between -12 and -18°C
+    const dgzLevels = levels.filter(l => l.temp >= -18 && l.temp <= -12);
+    const dgzDepth  = dgzLevels.length >= 2
+      ? dgzLevels[dgzLevels.length-1].hght - dgzLevels[0].hght : 0;
+    const dgzBase   = dgzLevels.length ? dgzLevels[0].hght : null;
+    const dgzTop    = dgzLevels.length ? dgzLevels[dgzLevels.length-1].hght : null;
+
+    // Cold layer depth for FZRA/sleet discrimination (sub-zero layer below warm nose)
+    let coldLayerDepthFt = 0;
+    if(warmNose) {
+      const coldBelow = levels.filter(l => l.temp <= 0 && l.pres > 850);
+      if(coldBelow.length >= 2) {
+        coldLayerDepthFt = Math.round(
+          (coldBelow[coldBelow.length-1].hght - coldBelow[0].hght) * 3.28084
+        );
+      }
+    }
+    // BOX FZRA rule: <2000ft=FZRA, 2000-2500ft=mix, >2500ft=sleet
+    let precipTypeCall = null;
+    if(warmNose) {
+      precipTypeCall = coldLayerDepthFt < 2000 ? 'FZRA'
+        : coldLayerDepthFt < 2500 ? 'FZRA/SLEET MIX' : 'SLEET';
+    }
+
+    // Theta-e ridge (850mb instability) — proxy for convective potential
+    const thetaE850 = l850
+      ? Math.round(l850.temp + 273.15 + 2500 * Math.max(0, l850.dwpt) / (273.15 + l850.temp))
+      : null;
+
+    // Directional shear 925→500 (veering = warm advection, backing = cold)
+    const shear925_500 = (l925 && l500)
+      ? { veer: ((l500.wdir - l925.wdir + 360) % 360 < 180) ? 'VEERING' : 'BACKING',
+          deg: Math.abs(l500.wdir - l925.wdir) }
+      : null;
+
+    // 0-1km bulk shear
+    const l1km = levels.find(l => sfc && Math.abs(l.hght - (sfc.hght + 1000)) < 200);
+    const shear0_1km = (sfc && l1km)
+      ? Math.round(Math.sqrt(
+          Math.pow((l1km.wspd*Math.sin(l1km.wdir*Math.PI/180) - sfc.wspd*Math.sin(sfc.wdir*Math.PI/180)),2) +
+          Math.pow((l1km.wspd*Math.cos(l1km.wdir*Math.PI/180) - sfc.wspd*Math.cos(sfc.wdir*Math.PI/180)),2)
+        )) : null;
+
+    // Low-level jet: max wind in 850-925mb layer with direction
+    const lljLayer = levels.filter(l => l.pres >= 850 && l.pres <= 950);
+    const lljFull  = lljLayer.length
+      ? lljLayer.reduce((mx,l) => l.wspd > mx.wspd ? l : mx, lljLayer[0])
+      : null;
+
+    // Mixing height proxy: level where lapse rate first goes dry adiabatic from surface
+    const mixHeight = sfc ? (() => {
+      const dryAdiabaticRate = 9.8; // °C/km
+      for(let i=1; i<levels.length; i++) {
+        const dz  = (levels[i].hght - sfc.hght) / 1000;
+        const dtExpected = sfc.temp - dryAdiabaticRate * dz;
+        if(levels[i].temp > dtExpected + 2) return levels[i].hght;
+      }
+      return null;
+    })() : null;
+
+    // CAPE proxy from surface parcel (simple lifted index)
+    const liftedIndex = (sfc && l500)
+      ? +(l500.temp - (sfc.temp - 9.8*(l500.hght - sfc.hght)/1000)).toFixed(1)
+      : null;
+
+    const diagSummaryExtra = [
+      `DGZ: ${dgzDepth > 100 ? dgzBase+'–'+dgzTop+'m ('+dgzDepth+'m deep)' : 'ABSENT'} [dendrite threshold ${dendriticActive?'ACTIVE':'inactive'}]`,
+      warmNose ? `WARM NOSE: 850mb ${l850.temp}°C → ${precipTypeCall} (cold layer ${coldLayerDepthFt}ft)` : 'Warm nose: absent',
+      lljFull && lljFull.wspd > 20 ? `LLJ: ${lljFull.wspd}kt @ ${lljFull.wdir}° / ${lljFull.pres}mb / ${lljFull.hght}m` : 'LLJ: absent',
+      shear925_500 ? `925→500 shear: ${shear925_500.veer} ${shear925_500.deg}°` : '',
+      shear0_1km != null ? `0–1km shear: ${shear0_1km}kt` : '',
+      liftedIndex != null ? `Lifted index: ${liftedIndex} ${liftedIndex < -2 ? '(UNSTABLE)' : liftedIndex < 0 ? '(slight instab)' : '(stable)'}` : '',
+      mixHeight ? `Mix height proxy: ${mixHeight}m` : '',
+    ].filter(Boolean).join('\n');
+
     return {
-      station, text, summary,
+      station, text, summary: summary + '\n' + diagSummaryExtra,
       parsed: {sfc, l925, l850, l700, l500, l300, levels},
       diagnostics: {
         dendriticActive, warmNose, lapseRate850_500,
         freezingLevelHgt: freezingLevel ? freezingLevel.hght : null,
-        llj: llj.wspd > 20 ? llj : null,
+        llj: lljFull && lljFull.wspd > 20 ? lljFull : null,
         tdDep700, windBacking, frontoPotential,
+        // Enhanced
+        dgzDepth, dgzBase, dgzTop,
+        coldLayerDepthFt, precipTypeCall,
+        thetaE850, shear925_500, shear0_1km, liftedIndex, mixHeight,
       }
     };
   } catch(e) {
@@ -2425,6 +2631,10 @@ async function fetchModelData() {
     renderSoundingPanel();
     renderFrontoPanel();
     renderTextPanel();
+    renderShiftBrief();
+    renderWWAPanel();
+    renderMarinePanel();
+    renderVerifyPanel();
 
     const nbmOk  = nbmResults.filter(r=>!r.error).length;
     const hrrrOk = hrrrResults.filter(r=>!r.error).length;
@@ -2942,6 +3152,677 @@ function renderProbTable(loc) {
 }
 // ─── END FORECAST PROB TABLE ─────────────────────────────────────────────────
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BOX WWA CRITERIA
+// ═══════════════════════════════════════════════════════════════════════════════
+const WWA_CRITERIA = {
+  // Snow criteria
+  WSW:   { snow: 6,  label: 'Winter Storm Warning', badge: 'wsw', color: '#ef4444' },
+  WW:    { snow: 4,  label: 'Winter Weather Advisory', badge: 'ww', color: '#fbbf24' },
+  // Wind criteria (kt)
+  HWW:   { gust: 58, label: 'High Wind Warning', badge: 'wsw', color: '#ef4444' },
+  WWA_W: { gust: 39, label: 'Wind Advisory', badge: 'ww', color: '#fbbf24' },
+  // Marine
+  GALE:  { windMarine: 34, label: 'Gale Warning', badge: 'wsw', color: '#ef4444' },
+  SCA:   { windMarine: 25, label: 'Small Craft Advisory', badge: 'sca', color: '#38bdf8' },
+  // Blizzard: sustained >= 35kt + snow + vis < 0.25mi for 3+ hrs
+  BLIZ:  { label: 'Blizzard Warning', badge: 'bliz', color: '#a78bfa' },
+};
+
+// BOX CWA zones mapped to our GEFS points
+const BOX_ZONES = [
+  { name: 'Boston Metro',       pts: ['Boston', 'Taunton', 'Lawrence'], marine: false },
+  { name: 'Worcester / I-495',  pts: ['Worcester', 'Fitchburg'],        marine: false },
+  { name: 'Providence / RI',    pts: ['Providence'],                    marine: false },
+  { name: 'Cape Cod / Islands', pts: ['Hyannis', 'Nantucket'],          marine: false },
+  { name: 'Hartford / CT',      pts: ['Hartford'],                      marine: false },
+  { name: 'Keene NH / Monad.',  pts: ['Keene NH'],                      marine: false },
+  { name: 'Marine (ANZ)',       pts: ['Nantucket', 'Boston'],           marine: true  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NDBC BUOYS for BOX marine zones
+// ═══════════════════════════════════════════════════════════════════════════════
+const BOX_BUOYS = [
+  { id:'44013', name:'Boston 16nm E',    zones:['ANZ230','ANZ231'] },
+  { id:'44018', name:'SE of Ipswich',    zones:['ANZ232'] },
+  { id:'44025', name:'S of Long Island', zones:['ANZ250'] },
+  { id:'44017', name:'Montauk Pt 23nm',  zones:['ANZ250'] },
+  { id:'44008', name:'Nantucket 54nm SE',zones:['ANZ251','ANZ252'] },
+  { id:'44020', name:'Nantucket Sound',  zones:['ANZ233','ANZ234'] },
+  { id:'44005', name:'Gulf of Maine',    zones:['ANZ235','ANZ236'] },
+  { id:'BUZM3', name:'Buzzards Bay',     zones:['ANZ233'] },
+  { id:'BRKL1', name:'Portland',         zones:['ANZ237'] },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VERIFICATION LOG  (localStorage)
+// ═══════════════════════════════════════════════════════════════════════════════
+function verifyGetLog() {
+  try { return JSON.parse(localStorage.getItem('box_verify_log') || '[]'); }
+  catch(e) { return []; }
+}
+function verifySaveLog(log) {
+  try { localStorage.setItem('box_verify_log', JSON.stringify(log.slice(-200))); }
+  catch(e) {}
+}
+function verifyLogForecast(entry) {
+  const log = verifyGetLog();
+  log.push({ ...entry, id: Date.now(), issued: new Date().toISOString() });
+  verifySaveLog(log);
+  renderVerifyPanel();
+}
+function verifyUpdateObs(id, obs) {
+  const log = verifyGetLog();
+  const idx = log.findIndex(e => e.id === id);
+  if(idx === -1) return;
+  log[idx].obs = obs;
+  log[idx].error = {};
+  if(obs.snow != null && log[idx].fcst.snow != null)
+    log[idx].error.snow = +(obs.snow - log[idx].fcst.snow).toFixed(1);
+  if(obs.tHi != null && log[idx].fcst.tHi != null)
+    log[idx].error.tHi = Math.round(obs.tHi - log[idx].fcst.tHi);
+  if(obs.tLo != null && log[idx].fcst.tLo != null)
+    log[idx].error.tLo = Math.round(obs.tLo - log[idx].fcst.tLo);
+  if(obs.gust != null && log[idx].fcst.gust != null)
+    log[idx].error.gust = Math.round(obs.gust - log[idx].fcst.gust);
+  verifySaveLog(log);
+  renderVerifyPanel();
+}
+function verifyDeleteEntry(id) {
+  const log = verifyGetLog().filter(e => e.id !== id);
+  verifySaveLog(log);
+  renderVerifyPanel();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHIFT BRIEFING
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderShiftBrief() {
+  const container = document.getElementById('brief-container');
+  if(!container) return;
+
+  const now = new Date();
+  const utcStr = now.toUTCString().slice(5,22);
+  const gefs   = liveData.gefs || {};
+  const nbm    = liveData.nbm  || {};
+  const alerts = liveData.alerts || [];
+  const snds   = liveData.soundings || {};
+
+  // Key points summary
+  const pts = Object.values(gefs).filter(p => p && !p.error);
+  const maxSnow6  = pts.length ? Math.max(...pts.map(p => p.exceedance?.snow6  || 0)) : 0;
+  const maxSnow12 = pts.length ? Math.max(...pts.map(p => p.exceedance?.snow12 || 0)) : 0;
+  const maxGust45 = pts.length ? Math.max(...pts.map(p => p.exceedance?.gust45 || 0)) : 0;
+  const maxQpf1   = pts.length ? Math.max(...pts.map(p => p.exceedance?.qpf1   || 0)) : 0;
+  const highConfPts = pts.filter(p => p.confidence === 'HIGH').map(p => p.name);
+  const lowConfPts  = pts.filter(p => p.confidence === 'LOW').map(p => p.name);
+
+  // Sounding highlights
+  const sndList = Object.values(snds).filter(s => s && s.diagnostics);
+  const hasDGZ  = sndList.some(s => s.diagnostics?.dgzDepth > 100);
+  const hasWarmNose = sndList.some(s => s.diagnostics?.warmNose);
+  const hasLLJ  = sndList.some(s => s.diagnostics?.llj);
+  const precipTypeCalls = sndList.filter(s => s.diagnostics?.precipTypeCall)
+    .map(s => `${s.station}: ${s.diagnostics.precipTypeCall}`).join(', ');
+
+  // Decision points for next 7 days
+  const decisions = [];
+  const bos = nbm['Boston'];
+  if(bos?.blocks) {
+    const rainBlocks = bos.blocks.filter(b => /rain/i.test(b.wx||''));
+    const snowBlocks = bos.blocks.filter(b => /snow/i.test(b.wx||''));
+    const fzraBlocks = bos.blocks.filter(b => /fzra|freezing/i.test(b.wx||''));
+    if(fzraBlocks.length) decisions.push({ icon:'🧊', text:'FZRA possible — monitor cold layer depth', priority:'high' });
+    if(snowBlocks.length && maxSnow6 > 20) decisions.push({ icon:'❄️', text:`Snow event with ${maxSnow6}% chance ≥6" — WSW criteria watch`, priority:'high' });
+    if(snowBlocks.length && maxSnow6 > 5)  decisions.push({ icon:'🌨', text:`Snow possible — ${maxSnow6}% ≥6", ${maxSnow12}% ≥12"`, priority:'med' });
+    if(maxGust45 > 30) decisions.push({ icon:'💨', text:`Wind advisory/HWW criteria possible — ${maxGust45}% P(gust≥45kt)`, priority:'med' });
+    if(maxQpf1 > 40)   decisions.push({ icon:'🌧', text:`Heavy rain possible — ${maxQpf1}% P(QPF≥1")`, priority:'med' });
+  }
+  if(hasDGZ)  decisions.push({ icon:'🔬', text:'Dendritic growth zone active — banding threat, check 700mb temp', priority:'med' });
+  if(hasWarmNose) decisions.push({ icon:'⚠️', text:`Warm nose detected — ${precipTypeCalls||'FZRA/sleet call needed'}`, priority:'high' });
+  if(hasLLJ)  decisions.push({ icon:'🌬', text:'LLJ detected — gust potential may exceed NBM guidance', priority:'low' });
+  if(!decisions.length) decisions.push({ icon:'✅', text:'No significant hazards flagged in next 7 days', priority:'ok' });
+
+  let html = `
+  <div class="brief-header">
+    <div class="brief-title">📋 WFO BOX — Shift Briefing</div>
+    <div class="brief-time">Generated: ${utcStr} UTC &nbsp;|&nbsp;
+      <button class="brief-gen-btn" onclick="renderShiftBriefAI()">🤖 Generate AI Briefing</button>
+      <button class="brief-gen-btn" onclick="verifyOpenLogForm()">📝 Log Forecast</button>
+    </div>
+  </div>`;
+
+  // Active alerts
+  html += `<div class="brief-section">
+    <div class="brief-section-hdr">🚨 Active Alerts (${alerts.length})</div>`;
+  if(alerts.length) {
+    alerts.forEach(a => {
+      html += `<div class="brief-row"><span class="val-hi">▶ ${a.event}</span> — ${a.areas||''} &nbsp;<span class="lbl">${a.onset||''}</span></div>`;
+    });
+  } else {
+    html += `<div class="brief-row" style="color:var(--muted)">No active alerts</div>`;
+  }
+  html += `</div>`;
+
+  // GEFS ensemble summary
+  html += `<div class="brief-section">
+    <div class="brief-section-hdr">📊 7-Day GEFS Summary</div>`;
+  const gefsRows = Object.values(gefs).filter(p => p && !p.error).slice(0,6);
+  gefsRows.forEach(p => {
+    const conf = p.confidence === 'HIGH' ? 'val-ok' : p.confidence === 'LOW' ? 'val-hi' : '';
+    html += `<div class="brief-row"><span class="lbl">${p.name.padEnd ? p.name : p.name}:</span>
+      QPF <strong>${p.totalQPF}"</strong> ±${p.totalQpfSpread}"
+      &nbsp; Snow P(≥6"): <span class="${p.exceedance?.snow6>=40?'val-hi':p.exceedance?.snow6>=15?'val-med':''}">${p.exceedance?.snow6||0}%</span>
+      &nbsp; Gust P(≥45kt): <span class="${p.exceedance?.gust45>=40?'val-hi':p.exceedance?.gust45>=15?'val-med':''}">${p.exceedance?.gust45||0}%</span>
+      &nbsp; Conf: <span class="${conf}">${p.confidence}</span>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Sounding diagnostics summary
+  if(sndList.length) {
+    html += `<div class="brief-section">
+      <div class="brief-section-hdr">🌡 Sounding Diagnostics</div>`;
+    sndList.forEach(s => {
+      const d = s.diagnostics;
+      html += `<div class="brief-row"><span class="lbl">${s.station}:</span>
+        DGZ ${d.dgzDepth > 100 ? `<span class="val-med">${d.dgzDepth}m ACTIVE</span>` : 'absent'}
+        &nbsp; ${d.warmNose ? `<span class="val-hi">WARM NOSE → ${d.precipTypeCall}</span>` : 'no warm nose'}
+        &nbsp; LLJ: ${d.llj ? `<span class="val-med">${d.llj.wspd}kt @ ${d.llj.wdir}°</span>` : 'absent'}
+        &nbsp; LI: ${d.liftedIndex != null ? d.liftedIndex : '—'}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Key decision points
+  html += `<div class="brief-section">
+    <div class="brief-section-hdr">🎯 Key Decision Points</div>`;
+  decisions.forEach(d => {
+    const c = d.priority === 'high' ? 'val-hi' : d.priority === 'med' ? 'val-med' : d.priority === 'low' ? 'val-low' : '';
+    html += `<div class="brief-decision-pt">
+      <span class="brief-dp-icon">${d.icon}</span>
+      <span class="brief-dp-txt ${c}">${d.text}</span>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Model confidence flags
+  if(lowConfPts.length || highConfPts.length) {
+    html += `<div class="brief-section">
+      <div class="brief-section-hdr">📡 Model Confidence</div>
+      ${highConfPts.length ? `<div class="brief-row"><span class="lbl">HIGH:</span> ${highConfPts.join(', ')}</div>` : ''}
+      ${lowConfPts.length  ? `<div class="brief-row"><span class="val-hi">LOW:</span> ${lowConfPts.join(', ')} — increased ensemble spread, hedged language recommended</div>` : ''}
+    </div>`;
+  }
+
+  // AI output area
+  html += `<div id="brief-ai-area" style="display:none">
+    <div class="brief-section-hdr" style="padding:6px 12px 2px">🤖 AI Shift Briefing</div>
+    <div id="brief-ai-out" class="brief-ai-out"></div>
+  </div>`;
+
+  // Log form (hidden by default)
+  html += renderVerifyLogForm();
+
+  container.innerHTML = html;
+}
+
+async function renderShiftBriefAI() {
+  const key = (document.getElementById('api-key-display')?.value || apiKey || '').trim();
+  if(!key || !key.startsWith('sk-')) { showToast('Enter API key first', true); return; }
+  const area = document.getElementById('brief-ai-area');
+  const out  = document.getElementById('brief-ai-out');
+  if(area) area.style.display = 'block';
+  if(out)  out.textContent = '⟳ Generating shift briefing...';
+
+  const prompt = `TASK: Write a concise 10-15 line operational shift briefing for WFO BOX.
+FORMAT:
+- Line 1: One-sentence situation summary (synoptic pattern + key hazard or lack thereof)
+- NEXT 24H: bullet points for each TAF station with ceiling/vis/precip type expected
+- NEXT 7 DAYS: 3-5 bullet decision points (what watches/advisories might be needed and when)
+- CONFIDENCE: one sentence on model agreement
+- BOTTOM LINE: one sentence for the incoming forecaster
+
+DATA:
+${formatNBMForAFD(liveData)}
+${formatGEFSForAFD(liveData)}
+${formatSoundingsForAFD(liveData)}
+ALERTS: ${liveData.alertSummary || 'None'}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,
+        'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800,
+        system: BOX_SYSTEM, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await resp.json();
+    const text = data.content?.find(b=>b.type==='text')?.text || 'No response';
+    if(out) out.textContent = text;
+  } catch(e) {
+    if(out) out.textContent = 'Error: ' + e.message;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WWA DECISION SUPPORT
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderWWAPanel() {
+  const container = document.getElementById('wwa-container');
+  if(!container) return;
+
+  const gefs = liveData.gefs || {};
+  const nbm  = liveData.nbm  || {};
+  const snds = liveData.soundings || {};
+
+  // Build zone-by-zone assessment
+  const zoneCards = BOX_ZONES.map(zone => {
+    // Aggregate GEFS across zone points
+    const zonePts = zone.pts.map(n => gefs[n]).filter(p => p && !p.error);
+    if(!zonePts.length) return { zone, missing: true };
+
+    const snow6  = Math.max(...zonePts.map(p => p.exceedance?.snow6  || 0));
+    const snow12 = Math.max(...zonePts.map(p => p.exceedance?.snow12 || 0));
+    const gust45 = Math.max(...zonePts.map(p => p.exceedance?.gust45 || 0));
+    const gust60 = Math.max(...zonePts.map(p => p.exceedance?.gust60 || 0));
+    const qpf1   = Math.max(...zonePts.map(p => p.exceedance?.qpf1   || 0));
+    const totalSnow = Math.max(...zonePts.map(p => parseFloat(p.totalSnow||0) || 0));
+    const totalGust = Math.max(...zonePts.map(p => p.maxGustMean || 0));
+    const conf  = zonePts[0]?.confidence || 'UNKNOWN';
+
+    // Per-day P(Snow≥4") using dailyStats from first zone point
+    const daySnow4 = (zonePts[0]?.dailyStats || []).slice(0,7).map(d => {
+      if(!d._memberVals?.snow?.length) return 0;
+      return Math.round(100 * d._memberVals.snow.filter(v=>v>=4).length / d._memberVals.snow.length);
+    });
+
+    // Determine issuance recommendation
+    const issuances = [];
+    if(snow6 >= 50 || totalSnow >= 6)  issuances.push({ type:'WSW', label:'Winter Storm Warning', color:'#ef4444', prob: snow6 });
+    else if(snow6 >= 20 || totalSnow >= 4) issuances.push({ type:'WW', label:'Winter Weather Advisory', color:'#fbbf24', prob: snow6 });
+    if(gust60 >= 30) issuances.push({ type:'HWW', label:'High Wind Warning', color:'#ef4444', prob: gust60 });
+    else if(gust45 >= 30) issuances.push({ type:'WIND', label:'Wind Advisory', color:'#fb923c', prob: gust45 });
+    if(zone.marine && gust45 >= 20) issuances.push({ type:'SCA', label:'Small Craft Advisory', color:'#38bdf8', prob: gust45 });
+
+    // FZRA check from soundings
+    const sndZone = Object.values(snds).find(s => s.diagnostics?.warmNose);
+    if(sndZone) issuances.push({ type:'FZRA', label:'FZRA Watch/Warning', color:'#a78bfa', prob: 80 });
+
+    return { zone, snow6, snow12, gust45, gust60, qpf1, totalSnow, totalGust, conf, issuances, daySnow4 };
+  });
+
+  // Top-level summary
+  const anyWSW  = zoneCards.some(z => z.issuances?.some(i => i.type === 'WSW'));
+  const anyWW   = zoneCards.some(z => z.issuances?.some(i => i.type === 'WW'));
+  const anyWind = zoneCards.some(z => z.issuances?.some(i => i.type === 'HWW' || i.type === 'WIND'));
+  const anySCA  = zoneCards.some(z => z.issuances?.some(i => i.type === 'SCA'));
+  const anyFZRA = zoneCards.some(z => z.issuances?.some(i => i.type === 'FZRA'));
+
+  let html = `<div class="wwa-header">
+    <div class="wwa-title">🚨 WWA Decision Support — WFO BOX</div>
+    <div class="wwa-subtitle">GEFS-based probabilistic criteria check · 7-day window · Updated with model data</div>
+  </div>`;
+
+  // Summary bar
+  html += `<div class="wwa-summary">
+    <div class="wwa-issuance-hdr">Issuance Recommendations</div>`;
+  const summaryItems = [
+    { cond: anyWSW,  color:'#ef4444', label:'Winter Storm Warning criteria met in ≥1 zone' },
+    { cond: anyWW,   color:'#fbbf24', label:'Winter Weather Advisory criteria met' },
+    { cond: anyWind, color:'#fb923c', label:'Wind Advisory / HWW criteria met' },
+    { cond: anySCA,  color:'#38bdf8', label:'Small Craft Advisory marine criteria met' },
+    { cond: anyFZRA, color:'#a78bfa', label:'FZRA conditions possible — warm nose detected in soundings' },
+  ].filter(s => s.cond);
+  if(!summaryItems.length) {
+    html += `<div class="wwa-issue-item"><div class="wwa-issue-dot" style="background:#a3e635"></div>
+      <span style="font-family:var(--mono);font-size:9px;color:#a3e635">No WWA criteria currently met — routine forecast pattern</span></div>`;
+  } else {
+    summaryItems.forEach(s => {
+      html += `<div class="wwa-issue-item">
+        <div class="wwa-issue-dot" style="background:${s.color}"></div>
+        <span style="font-family:var(--mono);font-size:9px;color:${s.color}">${s.label}</span>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+
+  // Zone cards grid
+  html += `<div class="wwa-zone-grid">`;
+  zoneCards.forEach(z => {
+    if(z.missing) {
+      html += `<div class="wwa-zone-card"><div class="wwa-zone-name">${z.zone.name}</div>
+        <div style="color:var(--muted);font-size:8px">No GEFS data</div></div>`;
+      return;
+    }
+
+    const wsw_hit  = z.snow6 >= 50  || z.totalSnow >= 6;
+    const ww_hit   = z.snow6 >= 20  || z.totalSnow >= 4;
+    const wind_hit = z.gust45 >= 30;
+    const hww_hit  = z.gust60 >= 30;
+
+    html += `<div class="wwa-zone-card">
+      <div class="wwa-zone-name">${z.zone.name}
+        ${z.issuances.map(i => `<span class="wwa-badge wwa-badge-${i.type==='WSW'?'wsw':i.type==='WW'?'ww':i.type==='SCA'?'sca':i.type==='FZRA'?'bliz':'wsw'}">${i.type}</span>`).join('')}
+      </div>
+      <div class="wwa-crit-row"><span class="wwa-crit-icon">❄️</span>
+        <span class="wwa-crit-lbl">Snow P(≥6")</span>
+        <span class="wwa-crit-val ${wsw_hit?'wwa-crit-hit':ww_hit?'wwa-crit-near':'wwa-crit-ok'}">${z.snow6}%</span>
+      </div>
+      <div class="wwa-crit-row"><span class="wwa-crit-icon">❄️</span>
+        <span class="wwa-crit-lbl">Snow P(≥12")</span>
+        <span class="wwa-crit-val ${z.snow12>=30?'wwa-crit-hit':z.snow12>=10?'wwa-crit-near':'wwa-crit-ok'}">${z.snow12}%</span>
+      </div>
+      <div class="wwa-crit-row"><span class="wwa-crit-icon">💨</span>
+        <span class="wwa-crit-lbl">Gust P(≥45kt)</span>
+        <span class="wwa-crit-val ${hww_hit?'wwa-crit-hit':wind_hit?'wwa-crit-near':'wwa-crit-ok'}">${z.gust45}%</span>
+      </div>
+      <div class="wwa-crit-row"><span class="wwa-crit-icon">💨</span>
+        <span class="wwa-crit-lbl">Gust P(≥60kt)</span>
+        <span class="wwa-crit-val ${z.gust60>=20?'wwa-crit-hit':z.gust60>=10?'wwa-crit-near':'wwa-crit-ok'}">${z.gust60}%</span>
+      </div>
+      <div class="wwa-crit-row"><span class="wwa-crit-icon">🌧</span>
+        <span class="wwa-crit-lbl">QPF P(≥1")</span>
+        <span class="wwa-crit-val ${z.qpf1>=50?'wwa-crit-hit':z.qpf1>=20?'wwa-crit-near':'wwa-crit-ok'}">${z.qpf1}%</span>
+      </div>
+      <div class="wwa-crit-row"><span style="font-size:8px">Conf:</span>
+        <span class="wwa-crit-lbl"></span>
+        <span class="wwa-crit-val ${z.conf==='HIGH'?'wwa-crit-ok':z.conf==='LOW'?'wwa-crit-hit':'wwa-crit-near'}">${z.conf}</span>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Sounding FZRA detail
+  const warnNoseSnd = Object.values(snds).filter(s => s.diagnostics?.warmNose);
+  if(warnNoseSnd.length) {
+    html += `<div class="wwa-summary" style="margin-top:4px">
+      <div class="wwa-issuance-hdr" style="color:#a78bfa">🧊 FZRA / Precip Type Analysis (Soundings)</div>`;
+    warnNoseSnd.forEach(s => {
+      const d = s.diagnostics;
+      html += `<div style="font-family:var(--mono);font-size:9px;color:var(--bright);padding:2px 0">
+        <strong>${s.station}:</strong> 850mb ${s.parsed?.l850?.temp}°C &nbsp; Cold layer: ${d.coldLayerDepthFt}ft
+        &nbsp; → <span style="color:#a78bfa;font-weight:700">${d.precipTypeCall}</span>
+        &nbsp; <span style="color:var(--muted);font-size:8px">(BOX rule: &lt;2000ft=FZRA, 2000-2500ft=mix, &gt;2500ft=sleet)</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MARINE BUOY PANEL
+// ═══════════════════════════════════════════════════════════════════════════════
+async function fetchBuoyObs(buoy) {
+  try {
+    // NDBC latest observations JSON API
+    const url = `https://www.ndbc.noaa.gov/data/latest_obs/${buoy.id}.rss`;
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+
+    // Parse RSS: wind, wave height, period, water temp, air temp
+    const getTag = (tag) => {
+      const m = text.match(new RegExp(`<${tag}[^>]*>([^<]+)</${tag}>`,'i'));
+      return m ? m[1].trim() : null;
+    };
+    const desc = getTag('description') || '';
+
+    // Parse description text like "Wind Speed: 12 knots, Wind Direction: NNW..."
+    const parse = (label, unit) => {
+      const m = desc.match(new RegExp(label + '[^:]*:\\s*([\\d\\.]+)\\s*' + unit,'i'));
+      return m ? parseFloat(m[1]) : null;
+    };
+    const windSpd  = parse('Wind Speed','knots') || parse('Wind Speed','kts');
+    const windDir  = (() => { const m = desc.match(/Wind Direction:\s*(\w+)/i); return m?m[1]:null; })();
+    const gustSpd  = parse('Gust','knots') || parse('Gust','kts');
+    const waveHgt  = parse('Wave Height','ft') || parse('Significant Wave Height','m');
+    const wavePer  = parse('Dominant Wave Period','sec') || parse('Wave Period','sec');
+    const airTemp  = parse('Air Temp','°F') || parse('Air Temperature','°F');
+    const waterTemp= parse('Water Temp','°F') || parse('Water Temperature','°F');
+    const pressure = parse('Pressure','mb') || parse('Barometric Pressure','mb');
+
+    return { ...buoy, windSpd, windDir, gustSpd, waveHgt, wavePer, airTemp, waterTemp, pressure, raw: desc.substring(0,400) };
+  } catch(e) {
+    return { ...buoy, error: e.message };
+  }
+}
+
+async function loadMarineObs() {
+  const container = document.getElementById('marine-container');
+  if(!container) return;
+  container.innerHTML = '<div class="model-loading"><span class="spin"></span>Loading buoy obs...</div>';
+
+  const results = await Promise.all(BOX_BUOYS.map(fetchBuoyObs));
+  liveData.buoys = results;
+  renderMarinePanel();
+}
+
+function renderMarinePanel() {
+  const container = document.getElementById('marine-container');
+  if(!container) return;
+  const buoys = liveData.buoys || [];
+  const nbm   = liveData.nbm  || {};
+  const gefs  = liveData.gefs || {};
+
+  let html = `<div class="marine-section">
+    <div class="marine-section-hdr">🌊 BOX Marine Zones — Buoy Observations</div>
+    <button class="marine-load-btn" onclick="loadMarineObs()">⟳ Refresh Buoy Obs</button>
+  </div>`;
+
+  // Buoy obs grid
+  if(buoys.length) {
+    html += `<div class="marine-section"><div class="marine-buoy-grid">`;
+    buoys.forEach(b => {
+      html += `<div class="marine-buoy-card">
+        <div class="marine-buoy-id">${b.id} &nbsp;<span class="marine-buoy-name">${b.name}</span></div>
+        <div style="margin-bottom:2px">${b.zones.map(z=>`<span class="marine-zone-badge">${z}</span>`).join('')}</div>`;
+      if(b.error) {
+        html += `<div style="color:var(--muted);font-size:8px">⚠ ${b.error}</div>`;
+      } else {
+        const windColor = b.windSpd >= 34 ? '#ef4444' : b.windSpd >= 25 ? '#fb923c' : b.windSpd >= 18 ? '#fbbf24' : 'var(--bright)';
+        const waveColor = b.waveHgt >= 10 ? '#ef4444' : b.waveHgt >= 6 ? '#fb923c' : b.waveHgt >= 4 ? '#fbbf24' : 'var(--bright)';
+        html += `
+        <div class="marine-buoy-row"><span class="marine-buoy-lbl">Wind</span>
+          <span style="color:${windColor}">${b.windDir||'—'} ${b.windSpd!=null?b.windSpd+'kt':'—'}${b.gustSpd?` G${b.gustSpd}kt`:''}</span></div>
+        <div class="marine-buoy-row"><span class="marine-buoy-lbl">Wave Ht</span>
+          <span style="color:${waveColor}">${b.waveHgt!=null?b.waveHgt+'ft':'—'}${b.wavePer?` @ ${b.wavePer}s`:''}</span></div>
+        <div class="marine-buoy-row"><span class="marine-buoy-lbl">Air/Water</span>
+          <span>${b.airTemp!=null?b.airTemp+'°F':'-'}/${b.waterTemp!=null?b.waterTemp+'°F':'-'}</span></div>
+        <div class="marine-buoy-row"><span class="marine-buoy-lbl">Pressure</span>
+          <span>${b.pressure!=null?b.pressure+'mb':'—'}</span></div>`;
+      }
+      html += `</div>`;
+    });
+    html += `</div></div>`;
+  } else {
+    html += `<div class="marine-section"><div class="brief-row" style="color:var(--muted)">No buoy data — click Load above</div></div>`;
+  }
+
+  // Marine NBM + GEFS summary for Nantucket/coastal points
+  const marPts = ['Nantucket','Hyannis','Boston'];
+  html += `<div class="marine-section">
+    <div class="marine-section-hdr">📊 Marine Point Guidance (NBM + GEFS)</div>`;
+  marPts.forEach(n => {
+    const g = gefs[n]; const nb = nbm[n];
+    if(!g || g.error) return;
+    html += `<div class="brief-row"><span class="lbl">${n}:</span>
+      MaxGust ${g.maxGustMean}kt ±${g.maxGustSpread}kt
+      &nbsp; P(≥35kt): <span class="${g.exceedance?.wind35>=30?'val-hi':g.exceedance?.wind35>=15?'val-med':''}">${g.exceedance?.wind35||0}%</span>
+      &nbsp; P(≥45kt): <span class="${g.exceedance?.gust45>=30?'val-hi':g.exceedance?.gust45>=15?'val-med':''}">${g.exceedance?.gust45||0}%</span>
+      &nbsp; SCA criteria (≥25kt): <span class="${g.exceedance?.wind35>=20?'val-hi':'val-low'}">${g.exceedance?.wind35||0}%</span>
+    </div>`;
+  });
+  html += `</div>`;
+
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VERIFICATION LOG PANEL
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderVerifyLogForm() {
+  return `<div id="verify-log-form" style="display:none;padding:8px 12px;border-top:1px solid var(--border2)">
+    <div class="brief-section-hdr">📝 Log Forecast for Verification</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+      <div><label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Location</label>
+        <select id="vlog-loc" style="width:100%;font-family:var(--mono);font-size:8px;background:var(--bg2);color:var(--bright);border:1px solid var(--border2);border-radius:3px;padding:3px">
+          ${Object.keys(BOX_POINTS).map(n=>`<option>${n}</option>`).join('')}
+        </select></div>
+      <div><label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Valid Date</label>
+        <input id="vlog-date" type="date" style="width:100%;font-family:var(--mono);font-size:8px;background:var(--bg2);color:var(--bright);border:1px solid var(--border2);border-radius:3px;padding:3px"></div>
+      <div><label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Fcst Snow (in)</label>
+        <input id="vlog-snow" type="number" step="0.1" placeholder="—" style="width:100%;font-family:var(--mono);font-size:8px;background:var(--bg2);color:var(--bright);border:1px solid var(--border2);border-radius:3px;padding:3px"></div>
+      <div><label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Fcst Hi°F</label>
+        <input id="vlog-thi" type="number" placeholder="—" style="width:100%;font-family:var(--mono);font-size:8px;background:var(--bg2);color:var(--bright);border:1px solid var(--border2);border-radius:3px;padding:3px"></div>
+      <div><label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Fcst Lo°F</label>
+        <input id="vlog-tlo" type="number" placeholder="—" style="width:100%;font-family:var(--mono);font-size:8px;background:var(--bg2);color:var(--bright);border:1px solid var(--border2);border-radius:3px;padding:3px"></div>
+      <div><label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Fcst Gust (kt)</label>
+        <input id="vlog-gust" type="number" placeholder="—" style="width:100%;font-family:var(--mono);font-size:8px;background:var(--bg2);color:var(--bright);border:1px solid var(--border2);border-radius:3px;padding:3px"></div>
+      <div><label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Fcst QPF (in)</label>
+        <input id="vlog-qpf" type="number" step="0.01" placeholder="—" style="width:100%;font-family:var(--mono);font-size:8px;background:var(--bg2);color:var(--bright);border:1px solid var(--border2);border-radius:3px;padding:3px"></div>
+      <div><label style="font-family:var(--mono);font-size:8px;color:var(--muted)">Synoptic Type</label>
+        <select id="vlog-type" style="width:100%;font-family:var(--mono);font-size:8px;background:var(--bg2);color:var(--bright);border:1px solid var(--border2);border-radius:3px;padding:3px">
+          <option>Nor'easter</option><option>Alberta Clipper</option><option>Coastal Low</option>
+          <option>Lake Effect</option><option>Post-frontal NW</option><option>Convective</option><option>Routine</option>
+        </select></div>
+    </div>
+    <button class="verify-log-btn" onclick="verifySubmitLog()">✅ Log Forecast</button>
+    <button class="verify-log-btn" style="margin-left:6px;border-color:var(--muted);color:var(--muted)" onclick="verifyOpenLogForm(false)">Cancel</button>
+  </div>`;
+}
+
+function verifyOpenLogForm(open=true) {
+  const el = document.getElementById('verify-log-form');
+  if(el) {
+    el.style.display = open ? 'block' : 'none';
+    // pre-fill date
+    if(open) {
+      const d = document.getElementById('vlog-date');
+      if(d) d.value = new Date().toISOString().slice(0,10);
+    }
+  }
+}
+
+function verifySubmitLog() {
+  const loc  = document.getElementById('vlog-loc')?.value;
+  const date = document.getElementById('vlog-date')?.value;
+  const snow = parseFloat(document.getElementById('vlog-snow')?.value) || null;
+  const tHi  = parseFloat(document.getElementById('vlog-thi')?.value) || null;
+  const tLo  = parseFloat(document.getElementById('vlog-tlo')?.value) || null;
+  const gust = parseFloat(document.getElementById('vlog-gust')?.value) || null;
+  const qpf  = parseFloat(document.getElementById('vlog-qpf')?.value) || null;
+  const type = document.getElementById('vlog-type')?.value || 'Routine';
+  verifyLogForecast({ loc, date, type, fcst:{ snow, tHi, tLo, gust, qpf } });
+  verifyOpenLogForm(false);
+  showMTab('verify');
+  showToast('Forecast logged ✓');
+}
+
+function renderVerifyPanel() {
+  const container = document.getElementById('verify-container');
+  if(!container) return;
+  const log = verifyGetLog();
+
+  let html = `<div class="verify-header">
+    <div class="verify-title">✅ Forecast Verification Log</div>
+    <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:2px">
+      Log issued forecasts here, then enter observed values when verified. Tracks systematic bias by location and pattern type.
+    </div>
+    <button class="verify-log-btn" style="margin-top:6px" onclick="showMTab('brief');verifyOpenLogForm(true)">+ Log New Forecast</button>
+    ${log.length ? `<button class="verify-log-btn" style="margin-left:6px;color:var(--muted);border-color:var(--muted)" onclick="if(confirm('Clear all ${log.length} entries?')){localStorage.removeItem('box_verify_log');renderVerifyPanel();}">Clear All</button>` : ''}
+  </div>`;
+
+  if(!log.length) {
+    html += `<div style="padding:20px;font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center">
+      No forecasts logged yet. Use "📝 Log Forecast" in the Shift Brief tab.
+    </div>`;
+    container.innerHTML = html;
+    return;
+  }
+
+  // Bias summary by element (only entries with obs)
+  const verified = log.filter(e => e.obs && e.error);
+  if(verified.length >= 2) {
+    const bias = (field) => {
+      const errs = verified.filter(e => e.error[field] != null).map(e => e.error[field]);
+      if(!errs.length) return null;
+      return (errs.reduce((s,v)=>s+v,0)/errs.length).toFixed(1);
+    };
+    html += `<div style="padding:8px 12px;border-bottom:1px solid var(--border2)">
+      <div style="font-family:var(--mono);font-size:8px;font-weight:700;color:var(--accent2);margin-bottom:4px">MEAN ERROR (obs − fcst) — ${verified.length} verified events</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:9px">
+        ${[['Snow (in)', 'snow'], ['High °F', 'tHi'], ['Low °F', 'tLo'], ['Gust (kt)', 'gust']].map(([lbl, field]) => {
+          const b = bias(field);
+          if(b === null) return '';
+          const col = Math.abs(b) < 1 ? '#a3e635' : Math.abs(b) < 3 ? '#fbbf24' : '#ef4444';
+          return `<span><span style="color:var(--muted)">${lbl}: </span><span style="color:${col};font-weight:700">${b > 0 ? '+' : ''}${b}</span></span>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Log table
+  html += `<div style="overflow-x:auto"><table class="verify-tbl">
+    <thead><tr>
+      <th>Date</th><th>Loc</th><th>Type</th>
+      <th>Snow F/O</th><th>Hi F/O</th><th>Lo F/O</th><th>Gust F/O</th><th>QPF F/O</th>
+      <th>Actions</th>
+    </tr></thead><tbody>`;
+
+  [...log].reverse().forEach(e => {
+    const errCell = (f, unit='') => {
+      const fcst = e.fcst[f]; const obs = e.obs?.[f]; const err = e.error?.[f];
+      const fcstStr = fcst != null ? fcst : '—';
+      const obsStr  = obs  != null ? obs  : '<span style="color:var(--muted)">?</span>';
+      const errStr  = err  != null
+        ? `<span class="${Math.abs(err)<1?'verify-err-ok':err>0?'verify-err-pos':'verify-err-neg'}">(${err>0?'+':''}${err}${unit})</span>`
+        : '';
+      return `<td>${fcstStr}/${obsStr} ${errStr}</td>`;
+    };
+
+    html += `<tr>
+      <td>${e.date||'—'}</td>
+      <td>${e.loc||'—'}</td>
+      <td style="color:var(--muted)">${e.type||'—'}</td>
+      ${errCell('snow','"')}
+      ${errCell('tHi','°')}
+      ${errCell('tLo','°')}
+      ${errCell('gust','kt')}
+      ${errCell('qpf','"')}
+      <td>
+        <button class="verify-log-btn" style="font-size:7px;padding:2px 5px" onclick="verifyEnterObs(${e.id})">Enter Obs</button>
+        <button class="verify-log-btn" style="font-size:7px;padding:2px 5px;margin-left:2px;color:#ef4444;border-color:#ef4444" onclick="verifyDeleteEntry(${e.id})">✕</button>
+      </td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
+function verifyEnterObs(id) {
+  const log = verifyGetLog();
+  const entry = log.find(e => e.id === id);
+  if(!entry) return;
+  const snow = parseFloat(prompt(`${entry.loc} ${entry.date} — Observed snow (in):`));
+  const tHi  = parseFloat(prompt('Observed high temp (°F):'));
+  const tLo  = parseFloat(prompt('Observed low temp (°F):'));
+  const gust = parseFloat(prompt('Observed max gust (kt):'));
+  const obs = {};
+  if(!isNaN(snow)) obs.snow = snow;
+  if(!isNaN(tHi))  obs.tHi  = tHi;
+  if(!isNaN(tLo))  obs.tLo  = tLo;
+  if(!isNaN(gust)) obs.gust = gust;
+  verifyUpdateObs(id, obs);
+}
+
+// ─── END NEW FEATURES ─────────────────────────────────────────────────────────
 // ─── ESAT PANEL ─────────────────────────────────────────────────────────────
 // Ensemble Situational Awareness Table — satable.ncep.noaa.gov
 // Three modes:
